@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:; manifest-src 'self'; worker-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#E8731A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>CB Edit Desk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%23E8731A'/%3E%3Ctext x='32' y='42' font-family='Arial' font-weight='700' font-size='26' fill='white' text-anchor='middle'%3ECB%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg:#FFF4E8;--card:#FFFBF6;--ink:#2B2118;--mut:#7A6656;--or:#E8731A;--or2:#FFE2C6;--line:#F0D9C2;--bad:#C0392B;--ok:#2E8B57;--blue:#2D6CDF}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+header{background:linear-gradient(90deg,#FFE7CF,#FFF4E8);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+.cb{width:40px;height:40px;border-radius:50%;background:var(--or);color:#fff;font-weight:800;display:grid;place-items:center;font-size:16px;cursor:pointer;flex:none}
+h1{font-size:19px;margin:0}
+header small{color:var(--mut)}
+#hdrProj{margin-left:auto;font-size:12.5px;color:var(--mut);text-align:right}
+.ib{background:#fff;color:var(--or);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:14px}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:14px}
+.card>h2{font-size:15px;margin:0 0 10px;color:var(--or);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:8px}
+.step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--or);color:#fff;font-size:12px;flex:none}
+.typeCard{background:linear-gradient(135deg,#FFE7CF,#FFF8F0);border:2px solid var(--or)}
+#etype{font-size:18px;font-weight:600;padding:10px 12px;border:2px solid var(--or)}
+button{background:var(--or);color:#fff;border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;font:inherit}
+button.ghost{background:#fff;color:var(--or);border:1px solid var(--or)}
+button.sm{padding:4px 10px;font-size:13px}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=number],input[type=date],input[type=password],textarea,select{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+label.l{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 18px}
+@media(max-width:760px){.g4{grid-template-columns:1fr}}
+@media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:4px 0}
+.chk input[type=checkbox]{margin-top:4px;accent-color:var(--or);flex:none;width:16px;height:16px}
+.tile{border:2px solid var(--line);border-radius:12px;padding:10px;background:#fff;cursor:pointer;text-align:center;user-select:none}
+.tile.sel{border-color:var(--or);background:#FFF0E0}
+.tile b{display:block}
+.tile span{font-size:12px;color:var(--mut)}
+.mut{color:var(--mut);font-size:13px}
+.files{font-size:12.5px;max-height:120px;overflow:auto;border:1px dashed var(--line);border-radius:8px;padding:5px 8px;background:#fff;margin-top:6px}
+.proj{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:4px 0;cursor:pointer;background:#fff;display:flex;justify-content:space-between;gap:8px}
+.proj.sel{border-color:var(--or);box-shadow:0 0 0 2px var(--or2)}
+.tags span{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;margin-left:3px;background:var(--or2);color:#8A4A10}
+.tags span.zero{background:#F6E9E6;color:var(--bad)}
+.sec{border:1px solid var(--line);border-radius:12px;margin:9px 0;background:#fff}
+.sec.off{opacity:.55}
+.sech{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#FFF0E0;border-radius:12px 12px 0 0}
+.sech input{accent-color:var(--or);width:18px;height:18px}
+.sech b{flex:1}
+.secb{padding:6px 12px 10px}
+.item{display:flex;gap:8px;align-items:center;margin:4px 0}
+.item input[type=checkbox]{accent-color:var(--or);width:16px;height:16px;flex:none}
+.item input[type=text]{padding:5px 8px;font-size:14px}
+.x{background:none!important;color:var(--mut)!important;padding:2px 6px!important;font-size:16px}
+.lock{font-size:12px;color:var(--ok);font-weight:600}
+.tok{font-family:Consolas,Menlo,monospace;background:var(--or2);padding:0 4px;border-radius:4px;font-size:12px}
+.prompt{font-family:Consolas,Menlo,monospace;font-size:13px;background:#FFF0E0;border:1px solid var(--line);border-radius:8px;padding:10px;white-space:pre-wrap}
+pre.brief{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:420px;overflow:auto;white-space:pre-wrap}
+.tl{display:flex;height:32px;border-radius:8px;overflow:hidden;margin-top:8px;font-size:12px;color:#fff;font-weight:600}
+.tl div{display:grid;place-items:center;white-space:nowrap;overflow:hidden;padding:0 6px}
+.tree{font-family:Consolas,Menlo,monospace;font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;white-space:pre;overflow:auto}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2B2118;color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.3s;pointer-events:none;z-index:30}
+.toast.on{opacity:1}
+.mic.on{background:var(--bad);color:#fff}
+footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
+.modal{position:fixed;inset:0;background:#0007;display:none;place-items:center;z-index:20;overflow:auto}
+.modal.on{display:grid}
+.modal>div{background:#FFFBF6;max-width:560px;width:calc(100% - 32px);border-radius:14px;padding:20px;margin:16px}
+.modal h3{margin-top:0;color:var(--or)}
+#lockScr{position:fixed;inset:0;background:linear-gradient(135deg,#FFE7CF,#FFF4E8);z-index:40;display:grid;place-items:center}
+#lockScr>div{background:#FFFBF6;border:1px solid var(--line);border-radius:16px;padding:28px;width:300px;text-align:center}
+#lockScr input{text-align:center;font-size:18px;letter-spacing:.1em;margin:12px 0}
+.log{font-family:Consolas,Menlo,monospace;font-size:12px;max-height:200px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px;white-space:pre-wrap}
+.hbtn{margin-left:auto;background:#fff;color:var(--or);border:1px solid var(--or);border-radius:20px;padding:2px 10px;font-size:12px;text-transform:none;letter-spacing:0;font-weight:600}
+.hint{background:#FFF7EE;border-left:4px solid var(--or);border-radius:8px;padding:8px 12px;margin:0 0 10px;font-size:13.5px}
+.hint ol,.hint ul{margin:4px 0;padding-left:20px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#E5F4EC;color:var(--ok);font-weight:600}
+</style>
+</head>
+<body>
+<div id="lockScr" hidden><div>
+  <div class="cb" style="margin:0 auto 8px;width:56px;height:56px;font-size:20px">CB</div>
+  <b>CB Edit Desk is locked</b>
+  <input type="password" id="pinIn" maxlength="32" autocomplete="off" placeholder="Password">
+  <button id="unlockBtn" style="width:100%">Unlock</button>
+  <p class="mut" id="lockMsg"></p>
+</div></div>
+
+<header>
+  <div class="cb" data-about title="About">CB</div>
+  <div><h1>CB Edit Desk</h1><small>Video editing briefs for Claude</small></div>
+  <div id="hdrProj"></div>
+  <button class="ib" id="installBtn" hidden title="Install CB Edit Desk as an app">⬇ Install app</button>
+  <button class="ib" id="lockNow" title="Lock now">🔒</button>
+  <button class="ib" id="openSet" title="Settings &amp; security">⚙</button>
+</header>
+
+<main>
+<div class="card typeCard">
+  <h2>Type of edit</h2>
+  <div class="row"><select id="etype" style="flex:1"></select><button class="ghost sm" id="delType" hidden title="Remove this custom type">Remove</button></div>
+  <p class="mut" id="typeDesc" style="margin:6px 0 0"></p>
+</div>
+
+<div class="card">
+  <h2><span class="step">1</span>Folder path</h2>
+  <label class="l">Channel / company</label>
+  <div class="row"><select id="chanSel" style="flex:1;font-size:16px;font-weight:600"></select><button class="ghost sm" id="delChan" hidden title="Remove this channel from the list (folders are not touched)">Remove</button></div>
+  <div class="g2" style="margin-top:6px">
+    <div><label class="l">Where to keep this channel's videos</label><select id="locType">
+      <option value="desk">Desktop (this laptop)</option><option value="ext">External hard disk / SSD</option><option value="drv">Another drive on this computer (D:, E: …)</option>
+      <option value="gd">Google Drive folder</option><option value="nas">Network drive (NAS)</option><option value="oth">Any other folder (type the path)</option></select></div>
+    <div id="locNameBox"><label class="l" id="locNameLbl">Drive name</label><input type="text" id="locName" maxlength="80"></div>
+  </div>
+  <p class="mut" id="locTip" style="margin:6px 0 0"></p>
+  <div class="g2" style="margin-top:10px">
+    <div>
+      <label class="l">Full folder path (used in the prompt — check it is exactly right)</label>
+      <input type="text" id="chanPath" maxlength="200">
+      <div class="row" style="margin-top:8px"><button id="pickRoot">Connect this folder</button><button class="ghost sm" id="reconnect" hidden>Reconnect</button></div>
+      <p class="mut" id="fsNote"></p>
+    </div>
+    <div><label class="l">Folder layout</label><div class="tree" id="tree"></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="step">2</span>Language and length</h2>
+  <div class="g4">
+    <div><label class="l">Language <span class="tok">{lang}</span></label><select id="lang"><option>Tamil</option><option>English</option><option>Tamil with English terms</option></select></div>
+    <div id="capBox"><label class="l">Captions of the speech (long videos)</label><select id="capLang"><option value="none">No captions</option><option value="Tamil">Tamil captions</option><option value="English">English captions</option><option value="Tamil + English">Tamil + English captions</option></select></div>
+    <div><label class="l">Maximum duration (minutes) <span class="tok">{dur}</span></label><input type="number" id="dur" min="0.25" step="0.25"></div>
+    <div><label class="l">Opening sequence (seconds) <span class="tok">{openSec}</span></label><input type="number" id="openSec" min="0" step="1"></div>
+  </div>
+  <label class="chk" style="margin-top:10px;background:#FFF0E0;border:1px solid var(--or);border-radius:10px;padding:8px 10px"><input type="checkbox" id="fcp" checked><span><b>Also deliver an editable Final Cut Pro project</b> — each part on its own layer (presenter, background, each title/graphic, B-roll, voice, music) so you can correct it yourself in Final Cut Pro</span></label>
+  <label class="l">Also make versions for</label>
+  <div id="alsoBox" class="row" style="gap:18px"></div>
+  <div class="tl" id="tl"></div>
+  <p class="mut" id="tlNote" style="margin:4px 0 0"></p>
+</div>
+
+<div class="card">
+  <h2><span class="step">3</span><span id="s3title">Video date</span></h2>
+  <div id="epBox" class="g3" hidden><div><label class="l">Episode No.</label><input type="number" id="epNo" min="1" step="1"></div>
+    <div style="grid-column:span 2;align-self:end"><label class="chk"><input type="checkbox" id="epDate"><span>Also show the date on the episode band</span></label></div></div>
+  <div class="g3"><div><label class="l">Date</label><input type="date" id="vdate"></div>
+    <div style="grid-column:span 2"><label class="l">Top band text <span class="tok">{dateline}</span></label><input type="text" id="dateline" maxlength="80"></div></div>
+  <label class="l">Videos already in this channel (click to reopen)</label>
+  <div id="projList"><span class="mut">Connect the folder to see them.</span></div>
+</div>
+
+<div class="card">
+  <h2><span class="step">4</span>Topic in short</h2>
+  <div class="g2">
+    <div><label class="l">Topic (used for the folder name)</label><input type="text" id="topic" maxlength="60" placeholder="e.g. Vodafone Idea Q2 results"></div>
+    <div><label class="l">On-screen title <span class="tok">{title}</span></label><input type="text" id="title" maxlength="100" placeholder="e.g. Vodafone Idea Q2: turnaround or trap?"></div>
+  </div>
+  <div id="cbFields" class="g3">
+    <div><label class="l">Company <span class="tok">{company}</span></label><input type="text" id="company" maxlength="60" placeholder="Vodafone Idea"></div>
+    <div><label class="l">NSE symbol <span class="tok">{symbol}</span></label><input type="text" id="symbol" maxlength="20" placeholder="IDEA"></div>
+    <div><label class="l">Price movement — last days <span class="tok">{days}</span></label><input type="number" id="days" value="5" min="2" max="250"></div>
+  </div>
+  <label class="l">Office location for the opening <span class="tok">{office}</span></label><input type="text" id="office" maxlength="100" value="our office in Chennai">
+  <div class="row" style="margin-top:10px"><button id="newProj" disabled>+ Create folders for this video</button><button class="ghost sm" id="refresh" disabled>Refresh</button>
+    <span class="mut">Creates <b id="namePrev"></b> in Raw, Reference and Render.</span></div>
+</div>
+
+<div class="card">
+  <h2><span class="step">5</span>What is in the folders</h2>
+  <div class="g2">
+    <div><b>Raw</b> <span class="mut">(recordings + the prompt)</span><div id="rawChecks"></div>
+      <div class="row" style="margin-top:4px"><input type="text" id="rawAdd" maxlength="80" placeholder="Add another Raw item…" style="flex:1"><button class="ghost sm" id="rawAddBtn">+ Add</button></div>
+      <div class="files" id="rawFiles"><span class="mut">Select a video to see its files.</span></div></div>
+    <div><b>Reference</b> <span class="mut">(material to use or copy)</span><div id="refChecks"></div>
+      <div class="row" style="margin-top:4px"><input type="text" id="refAdd" maxlength="80" placeholder="Add another Reference item…" style="flex:1"><button class="ghost sm" id="refAddBtn">+ Add</button></div>
+      <div class="files" id="refFiles"><span class="mut">Select a video to see its files.</span></div></div>
+  </div>
+  <label class="l">Note about these files</label><input type="text" id="fileNotes" maxlength="300" placeholder="e.g. Clip 2 is the good take. The HTML has the Q2 figures.">
+</div>
+
+<div class="card">
+  <h2><span class="step">6</span>Editing instructions — <span id="typeName" style="text-transform:none;color:var(--ink)"></span></h2>
+  <div class="row"><span class="mut" style="flex:1">Only the sections for this type are shown. Tick to include, untick to leave out, click a line to change it, "+ Add line" for your own.</span>
+    <select id="presetSel" style="width:auto"></select><button class="ghost sm" id="loadPreset">Load</button><button class="ghost sm" id="savePreset">Save as preset</button></div>
+  <div id="secs"></div>
+  <label class="l">Anything else for this video</label>
+  <textarea id="notes" maxlength="3000" placeholder="Type or speak extra instructions…"></textarea>
+  <div class="row" style="margin-top:6px"><button class="ghost sm mic" id="mic">🎤 Speak</button>
+    <select id="micLang" style="width:auto"><option value="ta-IN">Tamil</option><option value="en-IN">English</option></select><span class="mut" id="micNote"></span></div>
+</div>
+
+<div class="card">
+  <h2><span class="step">7</span>Send to Claude</h2>
+  <div class="row"><button id="save">Save brief &amp; copy prompt</button><button class="ghost" id="dl">Download brief</button><button class="ghost" id="cp">Copy full brief</button></div>
+  <p class="mut">Saves EDIT_BRIEF.md in this video's Raw folder (an older brief is kept in _brief_history). Paste the prompt into Claude on this laptop.</p>
+  <div class="prompt" id="prompt">—</div>
+  <details style="margin-top:10px"><summary class="mut" style="cursor:pointer">Preview the brief</summary><pre class="brief" id="briefPrev"></pre></details>
+</div>
+</main>
+<footer><div class="cb" data-about style="margin:0 auto 6px" title="Disclaimer">CB</div><span id="build"></span> · <span class="badge">Works offline · footage never leaves this computer</span></footer>
+
+<div class="modal" id="about"><div><h3>Cauvery Business · CB Edit Desk</h3>
+<p>Internal production tool. It runs only on this computer, has no internet access, creates folders and writes editing briefs; it never deletes or uploads anything. Videos made from it are for information and education only and are not investment advice.</p>
+<button data-close>Close</button></div></div>
+
+<div class="modal" id="addChan"><div>
+  <h3>Add a channel / company</h3>
+  <label class="l">Channel or company name</label><input type="text" id="acName" maxlength="40" placeholder="e.g. Kaveri Power Solutions">
+  <label class="l">Folder name (you choose the drive / location after adding)</label><input type="text" id="acFolder" maxlength="40" placeholder="e.g. Solar">
+  <label class="chk" style="margin-top:8px"><input type="checkbox" id="acStock"><span>Discusses listed companies (show company, NSE symbol and price-movement options)</span></label>
+  <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="ghost" data-close>Cancel</button><button id="acSave">Add channel</button></div>
+</div></div>
+<div class="modal" id="addType"><div>
+  <h3>Add a type of edit</h3>
+  <label class="l">Name</label><input type="text" id="atName" maxlength="50" placeholder="e.g. Market wrap (daily), Interview, Client testimonial">
+  <label class="l">Start from (its instructions are copied, then you can change them)</label><select id="atBase"></select>
+  <div class="g2"><div><label class="l">Format</label><input type="text" id="atSpec" maxlength="120"></div>
+    <div><label class="l">Short description</label><input type="text" id="atDesc" maxlength="160" placeholder="what this type is for"></div></div>
+  <div class="g2"><div><label class="l">Default duration (minutes)</label><input type="number" id="atDur" min="0.25" step="0.25"></div>
+    <div><label class="l">Default opening (seconds)</label><input type="number" id="atOpen" min="0" step="1"></div></div>
+  <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="ghost" data-close>Cancel</button><button id="atSave">Add type</button></div>
+</div></div>
+<div class="modal" id="settings"><div>
+  <h3>Settings &amp; security</h3>
+  <b>Password lock</b> <span id="pinState" class="mut"></span>
+  <div class="g2"><div><label class="l">New password (6–32 characters: letters and numbers, symbols allowed)</label><input type="password" id="pin1" maxlength="32" autocomplete="new-password"></div>
+    <div><label class="l">Confirm password</label><input type="password" id="pin2" maxlength="32" autocomplete="new-password"></div></div>
+  <label class="chk" style="margin-top:6px"><input type="checkbox" id="showPw"><span>Show password while typing</span></label>
+  <div class="row" style="margin-top:8px"><button class="sm" id="setPin">Set / change password</button><button class="ghost sm" id="clrPin">Remove password</button></div>
+  <label class="l">Lock automatically after (minutes idle, 0 = never)</label><input type="number" id="idleMin" min="0" max="240" value="10" style="width:120px">
+  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+  <b>Backup</b>
+  <p class="mut" style="margin:4px 0">Presets, your own items and settings live in this browser. Export them now and then; import on another laptop.</p>
+  <div class="row"><button class="ghost sm" id="expSet">Export settings</button><button class="ghost sm" id="impSet">Import settings</button><input type="file" id="impFile" accept=".json,application/json" hidden>
+    <button class="ghost sm" id="resetType">Reset this type's instructions</button></div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+  <b>Activity log</b> <span class="mut">(also saved to _Logs/activity.csv in the channel folder)</span>
+  <div class="log" id="logView"></div>
+  <div class="row" style="margin-top:12px;justify-content:flex-end"><button data-close>Close</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const BUILD="v4.0 app · build 20261122-1307 IST";
+const $=id=>document.getElementById(id);
+const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2600)};
+const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+$("build").textContent=BUILD;
+
+/* ================= TYPES ================= */
+const TYPES={
+ R:{n:"YouTube Regular (long video)",d:"16:9 landscape video for the main YouTube channel, with chapters, subscribe/bell/Hype requests, summary, Super Thanks and end screen.",spec:"16:9, 1920×1080, 25 fps",dur:10,open:10,file:"YouTube",also:["Facebook video","LinkedIn video","3 short clips (9:16) for Shorts / Reels"]},
+ S:{n:"YouTube Short",d:"Vertical 9:16 Short, up to 3 minutes, fast and crisp, news-bulletin style.",spec:"9:16 vertical, 1080×1920, 30 fps, maximum 3 minutes",dur:2,open:6,file:"Short",also:["Instagram Reel","Facebook Reel"]},
+ L:{n:"Reel (Instagram / Facebook)",d:"Vertical 9:16 Reel, up to 3 minutes, text kept inside the centre safe zone.",spec:"9:16 vertical, 1080×1920, 30 fps, maximum 3 minutes, text inside the centre safe zone",dur:1.5,open:4,file:"Reel",also:["YouTube Short","Facebook Reel"]},
+ T:{n:"Story (Instagram / Facebook / WhatsApp)",d:"Vertical story cut into 15-second parts, each part standing on its own, with stickers and a link to the full video.",spec:"9:16 vertical, 1080×1920, 30 fps, cut into 15-second parts",dur:0.5,open:0,file:"Story",also:["WhatsApp Status (same parts)"]},
+ P:{n:"Podcast",d:"Long conversation: camera switching on the speaker, name cards, chapters, clean audio, plus an audio-only file and short clips.",spec:"16:9, 1920×1080, 25 fps, plus audio-only MP3",dur:30,open:8,file:"Podcast",also:["Audio-only MP3 (Spotify / Apple Podcasts)","3 short clips (9:16) for Shorts / Reels","YouTube chapters list"]},
+ O:{n:"Others",d:"Any other kind of video — describe it under 'Anything else'.",spec:"as described in my instructions",dur:5,open:0,file:"Video",also:["Vertical 9:16 version","Square 1:1 version"]}};
+
+/* ================= INSTRUCTION LIBRARY =================
+   section: id, title, types (letters), items [text, on, types?]  */
+const LIB=[
+ {id:"open",t:"Opening sequence – cinematic introduction",ty:"RSLPO",items:[
+  ["Start with a view of Earth from outer space.",1],
+  ["Gradually zoom in towards India and then Chennai.",1],
+  ["Move towards the location of {office}.",1],
+  ["Show the exterior and entrance of our office.",1],
+  ["Transition into the presenter.",1],
+  ["Keep the whole space-to-office opening to about {openSec} seconds.",1],
+  ["Reuse the saved opening clip from Reference/_Common if it exists (make it once, reuse every time).",1],
+  ["After the opening, show a short podcast intro card with the show name and episode title.",1,"P"]]},
+ {id:"main",t:"Main video – background and presentation",ty:"RSLTPO",items:[
+  ["Choose the background to go with the presenter's shirt colour but CONTRAST in brightness: light / white shirt → deep, darker background (navy, deep teal, charcoal, maroon); dark shirt → softer, lighter background. Never a light shirt on a light background.",1,"RSLTO"],
+  ["Clean edges around the presenter: no lines, halo or green fringe; tighten and smooth the cut-out edge, remove green spill, add a soft rim light so the presenter separates from the background.",1,"RSLTO"],
+  ["Plain, smooth background directly behind the presenter — no fine lines, grids or busy patterns; slight blur and vignette are fine.",1,"RSLTO"],
+  ["Keep the background visually appealing but not distracting.",1],
+  ["Keep the presenter as the primary focus.",1],
+  ["Use relevant B-roll behind or beside the presenter where it helps the story.",0,"RO"],
+  ["Switch between camera angles / speakers to whoever is talking; use a two-shot when both talk.",1,"P"],
+  ["Show a name card (lower third) for each speaker the first time they speak.",1,"P"],
+  ["Fast pace: change the visual every 3–4 seconds.",1,"T"]]},
+ {id:"title",t:"Title and date",ty:"RSLTPO",items:[
+  ["Display at the top of the video: {dateline}",1,"SLT"],
+  ["Display the date band {dateline} at the start of the video.",1,"O"],
+  ["Show the episode band {dateline} at the start of the video (no \"NEW\").",1,"RP"],
+  ["Show the title: {title}",1],
+  ["Make the title clearly visible, using a contemporary financial-news presentation style.",1]]},
+ {id:"subj",t:"Subject of discussion",ty:"RSLTPO",items:[
+  ["What happened to {company} results?",1],
+  ["What factors could support or derail {company}?",1],
+  ["What should investors in {company} watch out for?",1],
+  ["Follow the order of the points in my speech; show each main point as a heading card.",1],
+  ["Add chapter title cards at each change of topic.",1,"RP"]]},
+ {id:"names",t:"Company name and logo",ty:"RSLTPO",items:[
+  ["As the discussion progresses, identify the company names mentioned in my speech and display them on screen.",1],
+  ["Use the respective company names and logos where appropriate.",1],
+  ["Show {company} name and logo with the ticker {symbol} when it is first mentioned.",1]]},
+ {id:"brand",t:"Channel logo and watermark",ty:"RSLTPO",items:[
+  ["Copy the channel logo from the reference video (same position and size).",1],
+  ["Copy the watermark from the reference video (same text, font, opacity and position).",1]]},
+ {id:"cta",t:"Subscribe, bell, Hype and other requests",ty:"RSLTPO",items:[
+  ["Around the first minute, ask viewers to subscribe and press the bell icon, with an animated Subscribe + 🔔 graphic.",1,"RPO"],
+  ["Ask viewers to press Hype on the video (first week) with a small Hype graphic.",1,"R"],
+  ["Ask viewers to like and share, with a small animated prompt.",1,"RSPO"],
+  ["Ask a question for viewers to answer in the comments.",1,"RSLP"],
+  ["End with a 1–2 second Subscribe prompt.",1,"S"],
+  ["End with Follow + Like + Share + Save prompts.",1,"L"],
+  ["Ask listeners to follow the podcast on Spotify / Apple Podcasts.",1,"P"],
+  ["Add link-sticker text pointing to the full video.",1,"T"],
+  ["Add a poll or question sticker text for engagement.",1,"T"]]},
+ {id:"fx",t:"Visual effects and audience engagement",ty:"RSLTPO",items:[
+  ["Start with a compelling visual hook in the first 3 seconds to create curiosity.",1],
+  ["Animate the price movement of {company} ({symbol}) over the last {days} days — rising from the bottom of the screen if it went up, falling from the top if it went down.",1,"RSLT"],
+  ["Highlight important statements through on-screen text. The text must not cover the presenter.",1],
+  ["Use charts and figures from the HTML dashboard in Reference where they support the point.",1,"RP"],
+  ["Each 15-second part must stand on its own with its own headline text.",1,"T"],
+  ["Avoid excessive animations or flashy effects.",1],
+  ["The editing should feel like a professional financial news bulletin, not a conventional talking-head video.",1,"RSLO"]]},
+ {id:"concl",t:"Conclusion (after the main discussion)",ty:"RSLPO",items:[
+  ["Summary of the topic: show 3–5 key points as an on-screen recap.",1,"RPO"],
+  ["Super Thanks: thank the viewers and invite Super Thanks, with the Super Thanks graphic.",1,"RP"],
+  ["Once again request viewers to subscribe and press the bell icon.",1,"RPO"],
+  ["End screen (last 20 seconds): space for two suggested videos and the subscribe button.",1,"RP"],
+  ["End on one strong takeaway line.",1,"SL"]]},
+ {id:"disc",t:"Disclaimer",ty:"RSLTPO",items:[
+  ["Show the disclaimer at the end: For information and education only. Not investment advice.",1]]},
+ {id:"short",t:"Important note – short-duration videos",ty:"SLT",items:[
+  ["Keep the space-to-office opening to approximately {openSec} seconds.",1,"SL"],
+  ["Reserve most of the {dur} minutes for the actual {company} analysis.",1],
+  ["Reserve most of the {dur} minutes for the main content.",1]]},
+ {id:"clean",t:"Clean-up",ty:"RSLTPO",items:[
+  ["Trim dead air at the start and end.",1],
+  ["Remove retakes and fumbles — keep the last good take.",1],
+  ["Remove filler and repeated words: so, um, uh, aah, hmm, அதாவது, வந்து, அப்புறம், சரி — and any word said twice in a row (\"so so\").",1],
+  ["Tighten long pauses (over 0.8 s).",1],
+  ["Even out the voice volume (loudness -14 LUFS).",1,"RSLTO"],
+  ["Podcast audio: noise reduction, de-ess, level both voices, loudness -16 LUFS.",1,"P"],
+  ["Reduce background noise / hum.",0,"RSLTO"]]},
+ {id:"final",t:"Final output",ty:"RSLTPO",items:[
+  ["Maximum duration: {dur} minutes.",1],
+  ["Language: {lang}.",1],
+  ["Format: {spec}.",1],
+  ["Name the parts _part1, _part2 … (15 seconds each).",1,"T"],
+  ["Maintain professional picture quality and clear audio.",1],
+  ["Ensure the presentation is crisp, engaging and logically sequenced.",1]]},
+ {id:"extras",t:"Also deliver",ty:"RSLTPO",items:[
+  ["Title, description, chapters with timestamps and tags.",1,"RP"],
+  ["Caption text and hashtags for posting.",1,"SLT"],
+  ["Thumbnail 1280×720.",1,"RP"],
+  ["Cover image 1080×1920.",0,"SL"]]},
+ {id:"obj",t:"Overall objective",ty:"RSLTPO",items:[
+  ["The video should look like a professionally produced financial news analysis.",1,"RSLTO"],
+  ["The podcast should feel like a professional studio conversation.",1,"P"],
+  ["The opening should establish the identity of our office building; the main presentation should communicate the subject clearly, intelligently and engagingly.",1,"RSLPO"],
+  ["Retain the substance of my speech while making the video crisp, visually attractive and interesting to watch.",1]]}
+];
+const SAFETY=["Never delete, move or overwrite anything in Raw or Reference — work on copies inside Render/<video>/_work.",
+ "Never overwrite a finished render; save new versions as _v2, _v3.",
+ "Use only my own material or public-domain / CC0 footage; record sources in Render/<video>/credits.txt.",
+ "Do not upload, post or share anything; leave the finished files in Render for me to check.",
+ "To save disk space, when the edit is finished remove only your own temporary files in Render/<video>/_work (frames, masks, test renders); keep the final videos, captions and the FCP project with its Media."];
+function buildType(t0){const t=baseOf(t0);return LIB.filter(s=>s.ty.includes(t)).map(s=>({id:s.id,t:s.t,on:true,items:s.items.filter(i=>(i[2]||s.ty).includes(t)).map(i=>({t:i[0],on:!!i[1]}))}))}
+
+/* ================= STATE ================= */
+const BUILTIN_CH={CB:{name:"Cauvery Business",folder:"Video",stock:true},CN:{name:"Cauvery News",folder:"News",stock:false}};
+let chanCustom=ls.get("chanCustom",{});
+if(ls.get("otherName","")&&!Object.keys(chanCustom).length){chanCustom.C1={name:ls.get("otherName",""),folder:ls.get("otherFolder","")||"Other",stock:false};ls.set("chanCustom",chanCustom)}
+const allCh=()=>Object.assign({},BUILTIN_CH,chanCustom);
+let typeCustom=ls.get("typeCustom",{});
+for(const k in typeCustom)TYPES[k]=typeCustom[k];
+const baseOf=t=>(TYPES[t]&&TYPES[t].base)||t;
+const SUBS=["Raw","Reference","Render"];
+const RAW_ITEMS=["Raw camera footage","Separate voice / audio recording","Speech script or notes (text)","Screen recordings","Second camera / guest camera","Previous edit to fix (re-edit)"];
+const REF_ITEMS=["Reference video (style, logo and watermark to copy)","HTML file (analysis dashboard — figures and charts)","B-roll clips","Information about the topic (PDF, notes, articles)","Company logos","Charts / images to show","Stock price data (CSV)","Office exterior / opening footage","Background music","Super Thanks / Subscribe / Hype graphics"];
+let chan=ls.get("chan","CN"),etype=ls.get("etype","S");if(!allCh()[chan])chan="CN";if(!TYPES[etype])etype="S";let _x,roots={},proj=null;
+let secsBy=ls.get("secsBy",{}),rawSel={},refSel={},alsoSel={},rawExtra=ls.get("rawExtra",[]),refExtra=ls.get("refExtra",[]);
+const secs=()=>secsBy[etype]||(secsBy[etype]=buildType(etype));
+const saveSecs=()=>ls.set("secsBy",secsBy);
+const isCB=()=>!!(allCh()[chan]||{}).stock;
+const cbOnly=t=>!isCB()&&/\{(company|symbol|days)\}/.test(t);
+const dup=t=>isCB()&&/main content\.$/.test(t)&&/\{dur\}/.test(t); // generic line hidden when company line exists
+
+/* ================= TYPE ================= */
+function drawTypes(){const s=$("etype");s.innerHTML="";for(const k in TYPES){const o=document.createElement("option");o.value=k;o.textContent=TYPES[k].n+(TYPES[k].base?"  (custom)":"");s.appendChild(o)}
+  const a=document.createElement("option");a.value="__add";a.textContent="＋ Add new type…";s.appendChild(a);s.value=etype;$("delType").hidden=!TYPES[etype].base}
+drawTypes();
+$("fcp").checked=ls.get("fcpOn",true);$("fcp").addEventListener("change",()=>ls.set("fcpOn",$("fcp").checked));
+function applyType(first){$("etype").value=etype;const T=TYPES[etype];$("typeDesc").textContent=T.d;$("typeName").textContent=T.n;
+  const d=ls.get("len_"+etype,null);$("dur").value=d?d.dur:T.dur;$("openSec").value=d?d.open:T.open;
+  alsoSel=ls.get("also_"+etype,{});$("alsoBox").innerHTML="";T.also.forEach(a=>{const l=document.createElement("label");l.className="chk";
+    l.innerHTML=`<input type="checkbox" ${alsoSel[a]?"checked":""}><span></span>`;l.querySelector("span").textContent=a;
+    l.querySelector("input").onchange=e=>{alsoSel[a]=e.target.checked;ls.set("also_"+etype,alsoSel);render()};$("alsoBox").appendChild(l)});
+  drawSecs();drawPresets();if(typeof epRefresh==="function"&&!first)epRefresh();if(!first)render()}
+$("etype").onchange=()=>{if($("etype").value==="__add"){$("etype").value=etype;openAddType();return}etype=$("etype").value;ls.set("etype",etype);$("delType").hidden=!TYPES[etype].base;applyType()};
+function openAddType(){const b=$("atBase");b.innerHTML="";["R","S","L","T","P","O"].forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=TYPES[k].n;b.appendChild(o)});
+  b.value=baseOf(etype);const fillB=()=>{const T=TYPES[b.value];$("atSpec").value=T.spec;$("atDur").value=T.dur;$("atOpen").value=T.open};b.onchange=fillB;fillB();
+  $("atName").value="";$("atDesc").value="";$("addType").classList.add("on");setTimeout(()=>$("atName").focus(),50)}
+$("atSave").onclick=()=>{const n=$("atName").value.trim().slice(0,50);if(!n){toast("Type a name");return}
+  if(Object.values(TYPES).some(t=>t.n.toLowerCase()===n.toLowerCase())){toast("That type already exists");return}
+  const B=TYPES[$("atBase").value],id="X"+Date.now().toString(36);
+  typeCustom[id]={n,base:$("atBase").value,d:$("atDesc").value.trim().slice(0,160)||("Custom type based on "+B.n),spec:$("atSpec").value.trim().slice(0,120)||B.spec,
+    dur:Math.max(.25,+$("atDur").value||B.dur),open:Math.max(0,+$("atOpen").value||0),file:slug(n).replace(/-/g,"")||"Video",also:B.also.slice()};
+  ls.set("typeCustom",typeCustom);TYPES[id]=typeCustom[id];secsBy[id]=buildType(id);saveSecs();etype=id;ls.set("etype",id);drawTypes();applyType();
+  $("addType").classList.remove("on");logAct("added type "+n);toast("Type added — adjust its instructions in step 6")};
+$("delType").onclick=()=>{const T=TYPES[etype];if(!T.base)return;if(!confirm("Remove the type '"+T.n+"' from the list? (No folders or videos are touched.)"))return;
+  delete typeCustom[etype];delete TYPES[etype];delete secsBy[etype];ls.set("typeCustom",typeCustom);saveSecs();logAct("removed type "+T.n);etype="S";ls.set("etype",etype);drawTypes();applyType()};
+["dur","openSec"].forEach(id=>$(id).addEventListener("input",()=>ls.set("len_"+etype,{dur:$("dur").value,open:$("openSec").value})));
+
+/* ================= CHANNEL / FOLDERS ================= */
+function chanInfo(){const c=clone(allCh()[chan]||BUILTIN_CH.CN);c.folder=safeName(c.folder)||"Videos";return c}
+function drawChan(){const s=$("chanSel");s.innerHTML="";const ch=allCh();for(const k in ch){const o=document.createElement("option");o.value=k;const L=ls.get("loc_"+k,{t:"desk"});o.textContent=ch[k].name+"  —  "+({desk:"Desktop",ext:"External drive",drv:"Drive",gd:"Google Drive",nas:"NAS",oth:"Folder"}[L.t])+" › "+ch[k].folder;s.appendChild(o)}
+  const a=document.createElement("option");a.value="__add";a.textContent="＋ Add new channel…";s.appendChild(a);s.value=chan;$("delChan").hidden=!!BUILTIN_CH[chan];$("cbFields").hidden=!isCB()}
+$("chanSel").onchange=()=>{const v=$("chanSel").value;if(v==="__add"){$("chanSel").value=chan;$("acName").value="";$("acFolder").value="";$("acStock").checked=false;$("addChan").classList.add("on");setTimeout(()=>$("acName").focus(),50);return}
+  saveChanForm();chan=v;ls.set("chan",v);loadChan()};
+$("acSave").onclick=()=>{const n=$("acName").value.trim().slice(0,40),f=safeName($("acFolder").value);if(!n||!f){toast("Fill in the name and the folder name");return}
+  if(Object.values(allCh()).some(c=>c.name.toLowerCase()===n.toLowerCase())){toast("That channel is already in the list");return}
+  const id="C"+Date.now().toString(36);chanCustom[id]={name:n,folder:f,stock:$("acStock").checked};ls.set("chanCustom",chanCustom);
+  $("addChan").classList.remove("on");saveChanForm();chan=id;ls.set("chan",id);logAct("added channel "+n);loadChan();toast("Channel added — now Connect its folder")};
+$("delChan").onclick=()=>{if(BUILTIN_CH[chan])return;const c=chanCustom[chan];if(!confirm("Remove '"+c.name+"' from the list? Its folders and videos on the Desktop are NOT touched."))return;
+  delete chanCustom[chan];ls.set("chanCustom",chanCustom);logAct("removed channel "+c.name);chan="CN";ls.set("chan",chan);loadChan()};
+function saveChanForm(){ls.set("path_"+chan,$("chanPath").value)}
+const isWin=/Win/i.test((navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||navigator.userAgent);
+const LOC={desk:{lbl:"",ph:"",tip:"Fine for short videos. Long videos and Final Cut Pro projects need many GB — an external SSD is better."},
+ ext:{lbl:"Drive name (as shown in Finder / This PC)",ph:isWin?"E":"CB_SSD",tip:"Best choice for big files: fast, cheap per GB. Keep the drive plugged in while Claude edits; use the same drive name every time."},
+ drv:{lbl:"Drive letter",ph:"D",tip:"Good on Windows computers with a second drive."},
+ gd:{lbl:isWin?"Google Drive letter (usually G)":"Google account e-mail used by Google Drive",ph:isWin?"G":"name@gmail.com",tip:"Needs Google Drive for desktop. Files stay on the computer until uploaded; 20–30 GB Final Cut Pro projects take long to sync — better for finished MP4s than for editing."},
+ nas:{lbl:isWin?"Server and share (e.g. 192.168.20.31\\Videos)":"Share name as mounted in Finder",ph:isWin?"192.168.20.31\\Videos":"Videos",tip:"Works if the NAS is mounted before editing. Slower than a local SSD for editing; good for keeping finished videos."},
+ oth:{lbl:"",ph:"",tip:"Type the full path of the folder below."}};
+function locPath(){const t=$("locType").value,n=$("locName").value.trim(),f=chanInfo().folder,w=isWin;
+  switch(t){case"desk":return w?"C:\\Users\\<you>\\Desktop\\"+f:"~/Desktop/"+f;
+    case"ext":return w?(n||"E").replace(/[:\\]+$/,"")+":\\"+f:"/Volumes/"+(n||"<drive>")+"/"+f;
+    case"drv":return (n||"D").replace(/[:\\]+$/,"")+":\\"+f;
+    case"gd":return w?(n||"G").replace(/[:\\]+$/,"")+":\\My Drive\\"+f:"~/Library/CloudStorage/GoogleDrive-"+(n||"<email>")+"/My Drive/"+f;
+    case"nas":return w?"\\\\"+(n||"<server>\\<share>")+"\\"+f:"/Volumes/"+(n||"<share>")+"/"+f;
+    default:return $("chanPath").value}}
+function drawLoc(){const L=ls.get("loc_"+chan,{t:"desk",n:""});$("locType").value=L.t;$("locName").value=L.n;const d=LOC[L.t];
+  $("locNameBox").hidden=!d.lbl;$("locNameLbl").textContent=d.lbl;$("locName").placeholder=d.ph;$("locTip").textContent=d.tip;
+  if(isWin&&L.t==="desk"&&!ls.get("pathTouched_"+chan,false))$("chanPath").value="~/Desktop/"+chanInfo().folder}
+function locChanged(){ls.set("loc_"+chan,{t:$("locType").value,n:$("locName").value.trim()});ls.set("pathTouched_"+chan,false);drawLoc();
+  if($("locType").value!=="oth"){$("chanPath").value=locPath();if($("locType").value==="desk"&&isWin)$("chanPath").value="~/Desktop/"+chanInfo().folder}
+  saveChanForm();drawChan();drawTree();render()}
+$("locType").onchange=locChanged;$("locName").oninput=locChanged;
+async function loadChan(){drawChan();
+  $("chanPath").value=ls.get("path_"+chan,"~/Desktop/"+chanInfo().folder);drawLoc();proj=null;if(typeof epRefresh==="function")epRefresh();
+  $("projList").innerHTML='<span class="mut">Connect the folder to see them.</span>';$("newProj").disabled=$("refresh").disabled=true;$("reconnect").hidden=true;if(hasFS)$("fsNote").textContent="";
+  drawTree();drawSecs();drawPresets();render();
+  if(roots[chan])return useRoot(roots[chan]);if(!hasFS)return;const h=await kvGet("root_"+chan);if(!h)return;
+  if(await h.queryPermission({mode:"readwrite"})==="granted")useRoot(h);else{$("reconnect").hidden=false;$("fsNote").textContent="Click Reconnect to open the "+h.name+" folder again."}}
+$("chanPath").oninput=()=>{ls.set("pathTouched_"+chan,true);if($("locType").value!=="oth"){$("locType").value="oth";ls.set("loc_"+chan,{t:"oth",n:""});drawLoc()}saveChanForm();drawTree();render()};
+function drawTree(){const n=proj||projName();$("tree").textContent=`${chanInfo().folder}/
+├─ Raw/${n}/        footage + EDIT_BRIEF.md
+├─ Reference/_Common/   logo, opening clip, office shots
+├─ Reference/${n}/  reference video, HTML, B-roll, info
+├─ Render/${n}/     finished videos
+└─ _Logs/             activity log`}
+
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("cbEditDesk",2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains("kv"))r.result.createObjectStore("kv")};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function kvSet(k,v){try{const db=await idb();db.transaction("kv","readwrite").objectStore("kv").put(v,k)}catch(e){}}
+async function kvGet(k){try{const db=await idb();return await new Promise(r=>{const q=db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}catch(e){return null}}
+const hasFS="showDirectoryPicker" in window;
+if(!hasFS){$("fsNote").innerHTML="This browser can't open folders — open the app in <b>Chrome</b> or <b>Edge</b>. You can still use <b>Download brief</b>.";$("pickRoot").disabled=true}
+async function useRoot(h){roots[chan]=h;await kvSet("root_"+chan,h);$("newProj").disabled=$("refresh").disabled=false;$("reconnect").hidden=true;
+  $("fsNote").innerHTML='<span class="badge">Connected: '+esc(h.name)+'</span>';for(const s of SUBS)await h.getDirectoryHandle(s,{create:true});await listProjects()}
+$("pickRoot").onclick=async()=>{try{const h=await showDirectoryPicker({mode:"readwrite",id:"cb_"+chan});
+  if(await h.requestPermission({mode:"readwrite"})!=="granted"){toast("Please click 'Edit files' / Allow so the app can create folders");return}
+  if(!ls.get("pathTouched_"+chan,false)&&$("locType").value==="desk"){$("chanPath").value="~/Desktop/"+h.name;saveChanForm()}await useRoot(h);render();logAct("connected folder "+h.name);toast(chanInfo().name+" folder connected")}
+  catch(e){if(e.name!=="AbortError")toast("Could not open that folder ("+e.name+"). Pick the channel folder itself, not a whole drive or the Desktop.")}};
+$("reconnect").onclick=async()=>{const h=await kvGet("root_"+chan);if(h&&await h.requestPermission({mode:"readwrite"})==="granted")useRoot(h)};
+async function sub(d,n,create){try{return await d.getDirectoryHandle(n,{create:!!create})}catch(e){return null}}
+async function listFiles(d){const a=[];if(!d)return a;for await(const [n,e] of d.entries()){if(n.startsWith(".")||n.startsWith("_brief"))continue;a.push(e.kind==="directory"?n+"/":n)}return a.sort()}
+async function listProjects(){const r=roots[chan];if(!r)return;const names=new Set(),cnt={};
+  for(const s of SUBS){const d=await sub(r,s);if(!d)continue;for await(const [n,e] of d.entries()){if(e.kind!=="directory"||/^[._]/.test(n))continue;names.add(n);(cnt[n]=cnt[n]||{})[s]=(await listFiles(e)).length}}
+  const list=[...names].sort((a,b)=>sk(b).localeCompare(sk(a)));const box=$("projList");box.innerHTML=list.length?"":'<span class="mut">No videos yet — fill the topic and Create folders.</span>';
+  for(const n of list.slice(0,30)){const d=document.createElement("div");d.className="proj"+(proj===n?" sel":"");
+    d.innerHTML=`<b></b><span class="tags">${SUBS.map(s=>`<span class="${cnt[n][s]?"":"zero"}">${s} ${cnt[n][s]||0}</span>`).join("")}</span>`;d.querySelector("b").textContent=n;
+    d.onclick=()=>selectProject(n);box.appendChild(d)}}
+const sk=n=>{const m=n.match(/^(\d\d)(\d\d)(\d\d)/);return m?m[3]+m[2]+m[1]+n:"0"+n};
+$("refresh").onclick=()=>{listProjects();showFiles()};
+
+/* ================= DATE / TOPIC ================= */
+const MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+const today=()=>new Date(Date.now()+330*60000).toISOString().slice(0,10);
+$("vdate").value=today();
+const dp=()=>{const [y,m,d]=($("vdate").value||today()).split("-");return {y,m,d}};
+function safeName(t){return String(t).normalize("NFC").replace(/\.\.+/g,"").replace(/[\\/:*?"<>|\x00-\x1f]/g,"").trim().slice(0,40)}
+const slug=t=>safeName(t).toUpperCase().replace(/[^A-Z0-9\u0B80-\u0BFF]+/g,"-").replace(/^-|-$/g,"").slice(0,40);
+const projName=()=>{const p=dp();return `${p.d}${p.m}${p.y.slice(2)}_${slug($("topic").value)||"TOPIC"}`};
+const epType=()=>["R","P"].includes(baseOf(etype));
+const epKey=()=>"ep_"+chan+"_"+etype;
+const autoDateline=()=>{const p=dp(),d=`${+p.d} ${MONTHS[+p.m-1]} ${p.y}`;if(epType()){const n=+$("epNo").value||1;return `EPISODE ${n}`+($("epDate").checked?` | ${d}`:"")}return `NEW | ${d}`};
+function epRefresh(){const on=epType();$("epBox").hidden=!on;$("s3title").textContent=on?"Episode and date":"Video date";
+  if(on){$("epNo").value=ls.get(epKey(),0)+1;$("epDate").checked=ls.get("epDate_"+chan+"_"+etype,false)}
+  if(!dlTouched)$("dateline").value=autoDateline()}
+let dlTouched=false;$("dateline").value=autoDateline();
+$("epNo").addEventListener("input",()=>{if(!dlTouched)$("dateline").value=autoDateline()});
+$("epDate").addEventListener("change",()=>{ls.set("epDate_"+chan+"_"+etype,$("epDate").checked);if(!dlTouched)$("dateline").value=autoDateline()});$("dateline").addEventListener("input",()=>dlTouched=true);
+$("vdate").addEventListener("change",()=>{if(!dlTouched)$("dateline").value=autoDateline();proj=null;$("namePrev").textContent=projName();drawTree()});
+$("topic").addEventListener("input",()=>{if(proj&&projName()!==proj)proj=null;$("namePrev").textContent=projName();drawTree()});$("namePrev").textContent=projName();
+async function createFolders(){if(!slug($("topic").value)){toast("Type a short topic first");$("topic").focus();return false}
+  const r=roots[chan],n=projName();if(!r){toast("Connect the folder first");return false}
+  for(const s of SUBS)await sub(await sub(r,s,true),n,true);await sub(await sub(r,"Reference",true),"_Common",true);
+  await selectProject(n,true);logAct("created "+n);toast("Folders created — copy footage into Raw/"+n);return true}
+$("newProj").onclick=createFolders;
+async function selectProject(n,fresh){proj=n;const m=n.match(/^(\d\d)(\d\d)(\d\d)_(.*)$/);
+  if(m&&!fresh){$("vdate").value=`20${m[3]}-${m[2]}-${m[1]}`;$("topic").value=m[4].replace(/-/g," ");if(!dlTouched)$("dateline").value=autoDateline()}
+  if(!fresh){try{const d=await sub(await sub(roots[chan],"Raw"),n);const f=await(await d.getFileHandle("brief.json")).getFile();applyAll(JSON.parse(await f.text()))}catch(e){}}
+  $("namePrev").textContent=projName();drawTree();await showFiles();await listProjects();render()}
+async function showFiles(){const r=roots[chan];if(!r||!proj)return;
+  const show=async(s,el)=>{const f=await listFiles(await sub(await sub(r,s),proj));$(el).innerHTML=f.length?f.map(x=>"• "+esc(x)).join("<br>"):'<span class="mut">Empty — copy files into '+s+'/'+esc(proj)+'</span>'};
+  await show("Raw","rawFiles");await show("Reference","refFiles")}
+
+/* ================= FOLDER CONTENTS ================= */
+function drawChecks(){const mk=(el,base,extra,sel,key)=>{$(el).innerHTML="";[...base,...extra].forEach(t=>{if(!(t in sel))sel[t]=/^Raw camera|^Reference video/.test(t)||extra.includes(t);
+  const l=document.createElement("label");l.className="chk";const own=extra.includes(t);
+  l.innerHTML=`<input type="checkbox" ${sel[t]?"checked":""}><span style="flex:1"></span>${own?'<button class="x" title="Remove">×</button>':""}`;l.querySelector("span").textContent=t;
+  l.querySelector("input").onchange=e=>{sel[t]=e.target.checked;render()};
+  if(own)l.querySelector(".x").onclick=e=>{e.preventDefault();extra.splice(extra.indexOf(t),1);delete sel[t];ls.set(key,extra);drawChecks();render()};$(el).appendChild(l)})};
+  mk("rawChecks",RAW_ITEMS,rawExtra,rawSel,"rawExtra");mk("refChecks",REF_ITEMS,refExtra,refSel,"refExtra")}
+function addItem(inp,extra,sel,key){const t=$(inp).value.trim().slice(0,80);if(!t)return;if(!extra.includes(t)){extra.push(t);ls.set(key,extra)}sel[t]=true;$(inp).value="";drawChecks();render()}
+$("rawAddBtn").onclick=()=>addItem("rawAdd",rawExtra,rawSel,"rawExtra");$("refAddBtn").onclick=()=>addItem("refAdd",refExtra,refSel,"refExtra");
+$("rawAdd").onkeydown=e=>{if(e.key==="Enter")$("rawAddBtn").onclick()};$("refAdd").onkeydown=e=>{if(e.key==="Enter")$("refAddBtn").onclick()};
+
+/* ================= INSTRUCTIONS ================= */
+function drawSecs(){const box=$("secs");box.innerHTML="";
+  secs().forEach((s,si)=>{const w=document.createElement("div");w.className="sec"+(s.on?"":" off");
+    w.innerHTML=`<div class="sech"><input type="checkbox" ${s.on?"checked":""}><b></b><button class="ghost sm add">+ Add line</button></div><div class="secb"></div>`;
+    w.querySelector("b").textContent=s.t;
+    w.querySelector(".sech input").onchange=e=>{s.on=e.target.checked;w.classList.toggle("off",!s.on);saveSecs();render()};
+    w.querySelector(".add").onclick=()=>{s.items.push({t:"",on:true});saveSecs();drawSecs();const ins=box.children[si].querySelectorAll(".item input[type=text]");ins[ins.length-1].focus()};
+    const b=w.querySelector(".secb");
+    s.items.forEach((it,ii)=>{const r=document.createElement("div");r.className="item";
+      r.innerHTML=`<input type="checkbox" ${it.on?"checked":""}><input type="text" maxlength="400" placeholder="Type your instruction…"><button class="x" title="Remove line">×</button>`;
+      const [c,t]=r.querySelectorAll("input");t.value=it.t;
+      c.onchange=()=>{it.on=c.checked;saveSecs();render()};t.oninput=()=>{it.t=t.value;saveSecs();render()};
+      r.querySelector(".x").onclick=()=>{s.items.splice(ii,1);saveSecs();drawSecs();render()};b.appendChild(r)});
+    box.appendChild(w)});
+  const sf=document.createElement("div");sf.className="sec";sf.innerHTML=`<div class="sech"><span class="lock">🔒</span><b>Safety rules (always included)</b></div><div class="secb">${SAFETY.map(x=>`<div class="item mut">✓ ${esc(x)}</div>`).join("")}</div>`;box.appendChild(sf)}
+
+/* ================= PRESETS ================= */
+const pkey=()=>"presets_"+chan+"_"+etype;
+function drawPresets(){const s=$("presetSel");s.innerHTML="<option value='__def'>House default</option>";Object.keys(ls.get(pkey(),{})).forEach(k=>{const o=document.createElement("option");o.value=o.textContent=k;s.appendChild(o)})}
+$("loadPreset").onclick=()=>{const v=$("presetSel").value;if(v==="__def")secsBy[etype]=buildType(etype);else{const p=ls.get(pkey(),{})[v];if(p){secsBy[etype]=clone(p.secs);if(p.lang)$("lang").value=p.lang;if(p.dur)$("dur").value=p.dur;if(p.openSec)$("openSec").value=p.openSec}}
+  saveSecs();drawSecs();render();toast("Loaded")};
+$("savePreset").onclick=()=>{const n=(prompt("Name for this preset:")||"").trim().slice(0,40);if(!n)return;const p=ls.get(pkey(),{});p[n]={secs:clone(secs()),lang:$("lang").value,dur:$("dur").value,openSec:$("openSec").value};ls.set(pkey(),p);drawPresets();$("presetSel").value=n;toast("Preset saved for "+chanInfo().name+" · "+TYPES[etype].n)};
+
+/* ================= BRIEF ================= */
+const FIELDS=["epNo","fcp","capLang","lang","dur","openSec","company","symbol","days","title","dateline","office","notes","fileNotes","topic"];
+function allSettings(){const o={etype,secs:secs(),rawSel,refSel,alsoSel,rawExtra,refExtra,app:BUILD};FIELDS.forEach(k=>o[k]=$(k).value);return o}
+function applyAll(o){if(!o)return;if(o.etype&&TYPES[o.etype]){etype=o.etype;drawTypes()}if(o.secs)secsBy[etype]=o.secs;
+  if(o.rawSel)rawSel=o.rawSel;if(o.refSel)refSel=o.refSel;(o.rawExtra||[]).forEach(t=>{if(!rawExtra.includes(t))rawExtra.push(t)});(o.refExtra||[]).forEach(t=>{if(!refExtra.includes(t))refExtra.push(t)});
+  FIELDS.forEach(k=>{if(k in o&&k!=="topic")$(k).value=o[k]});if(o.dateline)dlTouched=o.dateline!==autoDateline();
+  applyType(true);if(o.alsoSel){alsoSel=o.alsoSel;applyType(true)}if(o.dur)$("dur").value=o.dur;if(o.openSec)$("openSec").value=o.openSec;drawChecks();render()}
+const sep=()=>$("chanPath").value.includes("\\")?"\\":"/";
+const P=(...a)=>[$("chanPath").value,...a].join(sep());
+function fill(t){const m={company:$("company").value||"the company",symbol:$("symbol").value||"the NSE symbol",days:$("days").value,title:$("title").value||"(decide a sharp title from the speech)",
+  dateline:$("dateline").value,office:$("office").value||"our office",openSec:$("openSec").value,dur:$("dur").value,lang:$("lang").value,spec:TYPES[etype].spec};
+  return t.replace(/\{(\w+)\}/g,(x,k)=>k in m?m[k]:x)}
+const keep=i=>i.on&&i.t.trim()&&!cbOnly(i.t)&&!dup(i.t)&&!(!(+$("openSec").value)&&/\{openSec\}/.test(i.t));
+function brief(){const c=chanInfo(),n=proj||projName(),T=TYPES[etype],sel=o=>Object.keys(o).filter(k=>o[k]),also=sel(alsoSel);
+  let b=`# EDIT BRIEF — ${c.name}
+Type of edit: ${T.n}
+Video: ${n}
+Written: ${new Date().toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST · ${BUILD}
+
+## 1. Folder path
+- Raw: ${P("Raw",n)}
+- Reference: ${P("Reference",n)}  (+ shared: ${P("Reference","_Common")})
+- Render (output): ${P("Render",n)}
+
+## 2. Language and length
+- Language: ${$("lang").value}
+- Maximum duration: ${$("dur").value} minutes${+$("openSec").value?` · opening about ${$("openSec").value} s`:" · no opening sequence"}
+- Format: ${T.spec} → Render/${n}/${n}_${T.file}.mp4
+${also.length?"- Also make: "+also.join("; ")+"\n":""}
+${epType()?`## 3. Episode and date
+- Episode ${$("epNo").value||1} · recorded ${dp().d}-${dp().m}-${dp().y} · episode band: ${$("dateline").value}`:`## 3. Video date
+- ${dp().d}-${dp().m}-${dp().y} · top band: ${$("dateline").value}`}
+
+## 4. Topic
+- ${$("topic").value||"—"}
+- On-screen title: ${$("title").value||"(decide from the speech)"}
+${isCB()?`- Company: ${$("company").value||"—"} (${$("symbol").value||"—"}) · price movement: last ${$("days").value} days\n`:""}
+## 5. What is in the folders
+Raw: ${sel(rawSel).join("; ")||"raw camera footage"}
+Reference: ${sel(refSel).join("; ")||"nothing"}
+${$("fileNotes").value.trim()?"Note: "+$("fileNotes").value.trim()+"\n":""}
+## 6. Editing instructions
+`;
+  let k=0;for(const s of secs()){if(!s.on)continue;const its=s.items.filter(keep);if(!its.length)continue;
+    b+=`\n### 6.${++k} ${s.t}\n`+its.map(i=>"- "+fill(i.t)).join("\n")+"\n"}
+  b+=capSection(++k);
+  if($("fcp").checked)b+=fcpSection(++k);
+  if($("notes").value.trim())b+=`\n### My extra instructions\n${$("notes").value.trim()}\n`;
+  b+=`\n## Safety rules\n`+SAFETY.map(x=>"- "+x).join("\n")+"\n";return b}
+function capSection(k){const c=longType()?$("capLang").value:"none";let L;
+  if(c==="none")L=["Do NOT add captions or subtitles of the speech — do not type out what the presenter says.","On-screen text only for the title, date band, names, key statements and graphics listed above."];
+  else if(baseOf(etype)==="P")L=[`Give ${c} captions as a separate .srt file only (not burned in).`];
+  else L=[`Burned-in ${c} captions with word-by-word yellow highlight, placed so they never cover the face.`,`Also give the ${c} captions as .srt.`];
+  return `\n### 6.${k} Captions\n`+L.map(x=>"- "+x).join("\n")+"\n"}
+const longType=()=>["R","P"].includes(baseOf(etype));
+function fcpSection(k){const n=proj||projName();return `\n### 6.${k} Editable Final Cut Pro project (must)
+- Along with the MP4, deliver a Final Cut Pro project in Render/${n}/FCP/: ${n}.fcpxml plus a Media folder.
+- Each part on its own layer: presenter (cut-out with transparency), background, each title / name tag / date band, each graphic and the price chart, B-roll clips, cleaned voice, music — never one flattened clip.
+- Titles, name tags and the date band as editable Final Cut Pro text titles where possible, so the words can be changed in Final Cut Pro.
+- The presenter clips must keep the uncut footage underneath so a trim can be extended to bring back a cut word.
+- Same timing, positions and look as the MP4; include the logo and watermark on their own layers.
+- Add a short READ_ME.txt in the FCP folder: how to open it (File › Import › XML), what each layer is, and how to relink if the folder is moved.
+`}
+function capDefault(){const v=ls.get("cap_"+$("lang").value,null);$("capLang").value=v||($("lang").value==="English"?"English":"none")}
+$("lang").addEventListener("change",capDefault);$("capLang").addEventListener("change",()=>ls.set("cap_"+$("lang").value,$("capLang").value));
+function promptText(){const n=proj||projName();return `Use the cb-video-edit skill. Edit the ${chanInfo().name} ${TYPES[etype].n} "${n}" exactly as "${P("Raw",n,"EDIT_BRIEF.md")}" says, and put the finished files in "${P("Render",n)}".`}
+function drawTL(){const d=Math.max(.1,+$("dur").value||1)*60,o=Math.min(d,+$("openSec").value||0),on=secs().find(s=>s.id==="open")?.on;const oo=on?o:0,rest=d-oo,
+  hasEnd=["R","P"].includes(baseOf(etype))&&secs().find(s=>s.id==="concl")?.on,end=hasEnd?Math.min(30,rest*.15):0,mid=rest-end;
+  $("tl").innerHTML=(oo?`<div style="background:var(--blue);width:${oo/d*100}%">Opening ${oo}s</div>`:"")+
+  `<div style="background:var(--or);width:${mid/d*100}%">${isCB()&&$("company").value?esc($("company").value)+" analysis":"Main content"} · ${Math.floor(mid/60)}m ${Math.round(mid%60)}s</div>`+
+  (end?`<div style="background:#8A4A10;width:${end/d*100}%">Summary · thanks · subscribe</div>`:"");
+  $("tlNote").textContent=`${TYPES[etype].n} · up to ${$("dur").value} min`}
+function render(){$("cbFields").hidden=!isCB();$("capBox").hidden=!longType();
+  document.querySelectorAll("#secs .item").forEach(r=>{const t=r.querySelector("input[type=text]");if(!t)return;const off=cbOnly(t.value)||dup(t.value);r.style.opacity=off?.4:1;r.title=off?(cbOnly(t.value)?"Cauvery Business only — left out for this channel":"Replaced by the company line for Cauvery Business"):""});
+  $("prompt").textContent=promptText();$("briefPrev").textContent=brief();drawTL();
+  $("hdrProj").innerHTML=`<b>${esc(chanInfo().name)}</b> · ${esc(TYPES[etype].n)}<br>${esc(proj||projName())}`}
+document.addEventListener("input",render);document.addEventListener("change",render);
+
+/* ================= SAVE (never deletes; backs up old brief) ================= */
+async function copy(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();const ok=document.execCommand("copy");a.remove();return ok}}
+function download(name,text,type){const a=document.createElement("a");const u=URL.createObjectURL(new Blob([text],{type:type||"text/markdown"}));a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+const stamp=()=>new Date(Date.now()+330*60000).toISOString().slice(0,16).replace(/[-:T]/g,"").replace(/^(\d{8})/,"$1-");
+async function writeFile(dir,name,text){const fh=await dir.getFileHandle(name,{create:true});const ws=await fh.createWritable();await ws.write(text);await ws.close()}
+async function readFile(dir,name){try{return await(await(await dir.getFileHandle(name)).getFile()).text()}catch(e){return null}}
+$("dl").onclick=()=>{download("EDIT_BRIEF.md",brief());copy(promptText());logAct("downloaded brief "+(proj||projName()));toast("Brief downloaded · prompt copied")};
+$("cp").onclick=async()=>{await copy(brief());toast("Full brief copied")};
+$("save").onclick=async()=>{const r=roots[chan];if(!r||!hasFS){$("dl").onclick();return}
+  if(!proj&&!(await createFolders()))return;
+  try{const d=await sub(await sub(r,"Raw",true),proj,true);const old=await readFile(d,"EDIT_BRIEF.md");
+    if(old!==null){const h=await sub(d,"_brief_history",true);await writeFile(h,"EDIT_BRIEF_"+stamp()+".md",old)}
+    await writeFile(d,"EDIT_BRIEF.md",brief());await writeFile(d,"brief.json",JSON.stringify(allSettings(),null,1));
+    await copy(promptText());if(epType())ls.set(epKey(),Math.max(ls.get(epKey(),0),+$("epNo").value||0));await logAct("saved brief "+proj+" ("+TYPES[etype].n+")");toast("Brief saved · prompt copied — paste it into Claude");showFiles()}
+  catch(e){toast("Could not save: "+e.message)}};
+
+/* ================= ACTIVITY LOG ================= */
+async function logAct(what){const line=`${new Date().toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})},${chanInfo().name},${what.replace(/[,\n]/g," ")}`;
+  const L=ls.get("log",[]);L.unshift(line);ls.set("log",L.slice(0,300));
+  const r=roots[chan];if(r){try{const d=await sub(r,"_Logs",true);const old=await readFile(d,"activity.csv")||"time,channel,action\n";await writeFile(d,"activity.csv",old+line+"\n")}catch(e){}}}
+
+/* ================= PIN LOCK ================= */
+async function hash(pin,salt){const enc=new TextEncoder(),data=enc.encode(salt+":"+pin);
+  if(window.crypto&&crypto.subtle){const k=await crypto.subtle.importKey("raw",enc.encode(pin),"PBKDF2",false,["deriveBits"]);
+    const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode(salt),iterations:150000,hash:"SHA-256"},k,256);return "p2:"+[...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,"0")).join("")}
+  let h=2166136261;for(const b of data){h^=b;h=Math.imul(h,16777619)}return "f"+(h>>>0).toString(16)}
+const pinSet=()=>!!ls.get("pinHash",null);
+function lock(){if(!pinSet())return;$("lockScr").hidden=false;$("pinIn").value="";setTimeout(()=>$("pinIn").focus(),50)}
+let fails=0,waitUntil=0;
+async function tryUnlock(){if(Date.now()<waitUntil){$("lockMsg").textContent="Too many tries. Wait "+Math.ceil((waitUntil-Date.now())/1000)+" s.";return}
+  if(await hash($("pinIn").value,ls.get("pinSalt",""))===ls.get("pinHash","")){$("lockScr").hidden=true;fails=0;$("lockMsg").textContent="";bump()}
+  else{fails++;$("pinIn").value="";$("lockMsg").textContent="Wrong password";if(fails>=5){waitUntil=Date.now()+30000*Math.pow(2,fails-5);$("lockMsg").textContent="Too many wrong tries — locked for "+(30*Math.pow(2,fails-5))+" s"}}}
+$("unlockBtn").onclick=tryUnlock;$("pinIn").onkeydown=e=>{if(e.key==="Enter")tryUnlock()};
+$("lockNow").onclick=()=>{if(!pinSet()){toast("Set a password first in ⚙ Settings");return}lock()};
+let idleT=null;function bump(){clearTimeout(idleT);const m=+ls.get("idleMin",10);if(pinSet()&&m>0)idleT=setTimeout(lock,m*60000)}
+["mousemove","keydown","click","touchstart"].forEach(ev=>document.addEventListener(ev,()=>{if($("lockScr").hidden)bump()},{passive:true}));
+$("setPin").onclick=async()=>{const a=$("pin1").value,b=$("pin2").value;if(a.length<6||a.length>32||/\s/.test(a)){toast("Password must be 6–32 characters, no spaces");return}if(!/[A-Za-z]/.test(a)||!/\d/.test(a)){toast("Use at least one letter and one number");return}if(a!==b){toast("Passwords do not match");return}
+  const salt=[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,"0")).join("");ls.set("pinSalt",salt);ls.set("pinHash",await hash(a,salt));
+  $("pin1").value=$("pin2").value="";pinStateTxt();bump();logAct("password set/changed");toast("Password set — the app will ask for it when it opens")};
+$("clrPin").onclick=()=>{if(!pinSet())return;if(!confirm("Remove the password lock?"))return;localStorage.removeItem("pinHash");localStorage.removeItem("pinSalt");pinStateTxt();logAct("password removed");toast("Password removed")};
+$("idleMin").value=ls.get("idleMin",10);$("idleMin").oninput=()=>{ls.set("idleMin",Math.max(0,Math.min(240,+$("idleMin").value||0)));bump()};
+$("showPw").onchange=e=>{["pin1","pin2"].forEach(i=>$(i).type=e.target.checked?"text":"password")};
+function pinStateTxt(){$("pinState").textContent=pinSet()?"— ON":"— off (anyone at this laptop can open the app)"}
+
+/* ================= SETTINGS / BACKUP ================= */
+$("openSet").onclick=()=>{pinStateTxt();$("logView").textContent=ls.get("log",[]).slice(0,60).join("\n")||"No activity yet.";$("settings").classList.add("on")};
+document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>b.closest(".modal").classList.remove("on"));
+document.querySelectorAll("[data-about]").forEach(b=>b.onclick=()=>$("about").classList.add("on"));
+$("expSet").onclick=()=>{const o={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!/^pin/.test(k))o[k]=localStorage.getItem(k)}
+  download("CB_Edit_Desk_settings_"+stamp()+".json",JSON.stringify({app:"CB Edit Desk",build:BUILD,data:o},null,1),"application/json");logAct("exported settings")};
+$("impSet").onclick=()=>$("impFile").click();
+$("impFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>2e6){toast("File too large");return}
+  try{const j=JSON.parse(await f.text());if(j.app!=="CB Edit Desk"||typeof j.data!=="object")throw 0;
+    if(!confirm("Import settings? Presets and your items will be replaced with those in the file."))return;
+    for(const k in j.data){if(/^pin/.test(k)||typeof j.data[k]!=="string")continue;localStorage.setItem(k,j.data[k])}logAct("imported settings");location.reload()}
+  catch(x){toast("That is not a CB Edit Desk settings file")}};
+$("resetType").onclick=()=>{if(!confirm("Reset the instructions for "+TYPES[etype].n+" to the house default?"))return;secsBy[etype]=buildType(etype);saveSecs();drawSecs();render();toast("Reset")};
+
+/* ================= DICTATION ================= */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+if(!SR){$("mic").disabled=true;$("micNote").textContent="Voice typing needs Chrome or Edge."}
+$("mic").onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.lang=$("micLang").value;rec.continuous=true;
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)$("notes").value=($("notes").value+" "+e.results[i][0].transcript.trim()).trim().slice(0,3000);render()};
+  rec.onend=()=>{rec=null;$("mic").classList.remove("on");$("mic").textContent="🎤 Speak";$("micNote").textContent=""};
+  rec.start();$("mic").classList.add("on");$("mic").textContent="■ Stop";$("micNote").textContent="Listening… (uses Chrome's speech service)"};
+
+/* ================= INLINE HELP ================= */
+const HELP=[
+`<ol><li>Open the drop-down and pick what you are making: YouTube Regular, Short, Reel, Story, Podcast or Others.</li><li>Only the instructions for that type appear in step 6; the duration and opening length change too.</li><li>Making something new often? Choose <b>＋ Add new type…</b>, name it, pick the type to start from. Remove a custom type with <b>Remove</b>.</li></ol><b>First time on a laptop (once)</b><ol><li>Open this file in Chrome or Edge; make it an app: ⋮ › Cast, save and share › Create shortcut › tick Open as window.</li><li>Decide where each channel's videos live (Desktop, external SSD, another drive, Google Drive or NAS), make one folder per channel there and put the scripts folder inside each.</li><li>⚙ Settings › set a password, then Export settings to keep a backup.</li><li>In the Claude desktop app: ＋ › Add folder › the channel folder.</li></ol>`,
+`<ol><li>Pick the channel from the drop-down (or <b>＋ Add new channel…</b> — give a name and a folder name).</li><li>Choose <b>where to keep its videos</b>: Desktop, external SSD (best for big files), another drive, Google Drive, NAS or any folder; type the drive name if asked.</li><li>Check the <b>full folder path</b> is exactly right — Claude uses it.</li><li>First time only: click <b>Connect this folder</b>, select that folder, click <b>Edit files</b> when Chrome asks. The app makes Raw, Reference and Render inside it.</li></ol>`,
+`<ol><li>Choose the language of the speech.</li><li>Captions (long videos only): leave <b>No captions</b> for Tamil unless you want the speech typed on screen.</li><li>Set the maximum minutes and the opening seconds — the coloured bar shows how the time is shared.</li><li>Keep <b>Final Cut Pro project</b> ticked to be able to correct it yourself.</li><li>Tick any extra versions (e.g. also a Reel).</li></ol>`,
+`<ol><li>Check the date — it is today by default.</li><li>Shorts, Reels, Stories: the top band reads NEW | 22 NOVEMBER 2026. YouTube Regular and Podcast: it reads EPISODE 12 instead — the number goes up by one each time you save a brief; tick “Also show the date” if you want the date too.</li><li>The band fills itself; type over it to change it.</li><li>Earlier videos are listed below — click one to reopen it with all its settings.</li></ol>`,
+`<ol><li>Type a short topic, e.g. <i>Vodafone Idea Q2</i> — it becomes the folder name.</li><li>Type the on-screen title, or leave it blank for Claude to suggest one.</li><li>Cauvery Business: fill company, NSE symbol and the days of price movement.</li><li>Click <b>＋ Create folders for this video</b>, then copy the footage into Raw/&lt;date_topic&gt; and material into Reference/&lt;date_topic&gt;, and click <b>Refresh</b>.</li></ol>`,
+`<ol><li>Tick what you put in Raw and in Reference — the file list below shows what is really there.</li><li>Something not in the list? Type it in <b>Add another…</b> and press <b>＋ Add</b>; it stays for next time (× removes it).</li><li>Use the note box for things like “clip 2 is the good take”.</li></ol>`,
+`<ol><li>Each grey heading is a section: untick it to leave the whole section out.</li><li>Untick a line to leave it out; click a line to change its words; × deletes it; <b>＋ Add line</b> adds your own.</li><li>Words in {curly brackets} are filled in from the steps above.</li><li>Like this setup? <b>Save as preset</b>; next time choose it and click <b>Load</b>. “House default” restores the original.</li><li>Type or 🎤 speak anything extra at the bottom.</li></ol>`,
+`<ol><li>Click <b>Save brief &amp; copy prompt</b> — the brief is saved in Raw/&lt;date_topic&gt; and a one-line prompt is copied.</li><li>In the Claude desktop app, open a chat that has this channel folder added (＋ › Add folder), paste and send.</li><li>Finished video, captions and the FCP folder appear in Render/&lt;date_topic&gt;.</li><li>Need a fix? Tell Claude what to change (a _v2 is made) or open the FCP project in Final Cut Pro (File › Import › XML).</li></ol>`];
+document.querySelectorAll("main>.card").forEach((c,i)=>{if(!HELP[i])return;const h2=c.querySelector("h2");const b=document.createElement("button");b.className="hbtn";b.textContent="❓ How";
+  const d=document.createElement("div");d.className="hint";d.innerHTML=HELP[i];d.hidden=!(i===0&&!ls.get("helpSeen",false));h2.appendChild(b);h2.after(d);
+  b.onclick=()=>{d.hidden=!d.hidden;b.textContent=d.hidden?"❓ How":"✕ Hide"};if(!d.hidden)b.textContent="✕ Hide"});
+
+ls.set("helpSeen",true);
+/* ================= APP (install + updates) ================= */
+let deferredInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredInstall=e;$("installBtn").hidden=false});
+$("installBtn").onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();const r=await deferredInstall.userChoice;deferredInstall=null;$("installBtn").hidden=true;if(r.outcome==="accepted")logAct("installed app")};
+window.addEventListener("appinstalled",()=>{$("installBtn").hidden=true;toast("CB Edit Desk installed — open it from your apps")});
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").then(reg=>{
+  const ask=w=>{if(confirm("A new version of CB Edit Desk is ready. Update now?")){w.postMessage("skipWaiting")}};
+  if(reg.waiting)ask(reg.waiting);
+  reg.addEventListener("updatefound",()=>{const w=reg.installing;w&&w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)ask(w)})});
+  let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!reloaded){reloaded=true;location.reload()}});
+}).catch(()=>{})}
+/* ================= START ================= */
+drawChecks();capDefault();applyType(true);epRefresh();loadChan();render();if(pinSet())lock();else bump();
+</script>
+</body>
+</html>
