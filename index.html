@@ -48,6 +48,10 @@ label.l{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
 .tile b{display:block}
 .tile span{font-size:12px;color:var(--mut)}
 .mut{color:var(--mut);font-size:13px}
+.drop{border:2px dashed var(--or);border-radius:10px;background:#FFF7EE;padding:12px;text-align:center;cursor:pointer;margin-top:8px;font-size:13.5px;color:#8A4A10}
+.drop.over{background:#FFE2C6}
+.drop b{display:block;font-size:14px;color:var(--ink)}
+.prog{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}.prog>div{height:100%;background:var(--or);width:0}
 .files{font-size:12.5px;max-height:120px;overflow:auto;border:1px dashed var(--line);border-radius:8px;padding:5px 8px;background:#fff;margin-top:6px}
 .proj{border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin:4px 0;cursor:pointer;background:#fff;display:flex;justify-content:space-between;gap:8px}
 .proj.sel{border-color:var(--or);box-shadow:0 0 0 2px var(--or2)}
@@ -143,6 +147,8 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
     <div><label class="l">Maximum duration (minutes) <span class="tok">{dur}</span></label><input type="number" id="dur" min="0.25" step="0.25"></div>
     <div><label class="l">Opening sequence (seconds) <span class="tok">{openSec}</span></label><input type="number" id="openSec" min="0" step="1"></div>
   </div>
+  <div class="g3" style="margin-top:8px"><div><label class="l">Cameras used for this shoot</label><select id="cams"><option value="1">1 camera</option><option value="2">2 cameras (A + B)</option><option value="3">3 cameras (A + B + C)</option></select></div>
+    <div style="grid-column:span 2;align-self:end"><span class="mut" id="camNote"></span></div></div>
   <label class="chk" style="margin-top:10px;background:#FFF0E0;border:1px solid var(--or);border-radius:10px;padding:8px 10px"><input type="checkbox" id="fcp" checked><span><b>Also deliver an editable Final Cut Pro project</b> — each part on its own layer (presenter, background, each title/graphic, B-roll, voice, music) so you can correct it yourself in Final Cut Pro</span></label>
   <label class="l">Also make versions for</label>
   <div id="alsoBox" class="row" style="gap:18px"></div>
@@ -181,11 +187,16 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
   <div class="g2">
     <div><b>Raw</b> <span class="mut">(recordings + the prompt)</span><div id="rawChecks"></div>
       <div class="row" style="margin-top:4px"><input type="text" id="rawAdd" maxlength="80" placeholder="Add another Raw item…" style="flex:1"><button class="ghost sm" id="rawAddBtn">+ Add</button></div>
+      <div class="row" id="camPickRow" style="margin-top:6px" hidden><span class="mut">These files are from:</span><select id="camSrc" style="width:auto"><option value="CamA_">Camera A (front)</option><option value="CamB_">Camera B (side / close-up)</option><option value="CamC_">Camera C</option><option value="Audio_">Audio recorder</option><option value="">Other (keep name)</option></select></div>
+      <div class="drop" id="rawDrop"><b>⬆ Add footage to Raw</b>Drag video / audio files here, or click to choose</div><input type="file" id="rawPick" multiple hidden>
       <div class="files" id="rawFiles"><span class="mut">Select a video to see its files.</span></div></div>
     <div><b>Reference</b> <span class="mut">(material to use or copy)</span><div id="refChecks"></div>
       <div class="row" style="margin-top:4px"><input type="text" id="refAdd" maxlength="80" placeholder="Add another Reference item…" style="flex:1"><button class="ghost sm" id="refAddBtn">+ Add</button></div>
+      <div class="drop" id="refDrop"><b>⬆ Add material to Reference</b>Drag files here, or click to choose</div><input type="file" id="refPick" multiple hidden>
+      <div class="row" style="margin-top:4px"><span class="mut">Put them in:</span><select id="refDest" style="width:auto"><option value="video">This video's folder</option><option value="common">_Common (shared by all videos)</option><option value="sfx">_Common › SFX (sound effects)</option></select></div>
       <div class="files" id="refFiles"><span class="mut">Select a video to see its files.</span></div></div>
   </div>
+  <div id="copyBox" hidden><span class="mut" id="copyMsg"></span><div class="prog"><div id="copyBar"></div></div></div>
   <label class="l">Note about these files</label><input type="text" id="fileNotes" maxlength="300" placeholder="e.g. Clip 2 is the good take. The HTML has the Q2 figures.">
 </div>
 
@@ -253,7 +264,7 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
 
 <script>
 "use strict";
-const BUILD="v4.0 app · build 20261122-1307 IST";
+const BUILD="v4.8 app · build 20261122-2024 IST";
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2600)};
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -329,6 +340,34 @@ const LIB=[
   ["Each 15-second part must stand on its own with its own headline text.",1,"T"],
   ["Avoid excessive animations or flashy effects.",1],
   ["The editing should feel like a professional financial news bulletin, not a conventional talking-head video.",1,"RSLO"]]},
+ {id:"zoom",t:"Zoom in / zoom out (camera moves)",ty:"RSLTPO",items:[
+  ["Punch-in zoom (quick cut to a slightly closer frame, about 1.15×) on important lines and numbers.",1],
+  ["Slow zoom in (push-in, about 1.0 to 1.1×) while I make a strong or serious statement.",1,"RSLO"],
+  ["Zoom out back to the normal frame when a new section or topic starts.",1],
+  ["Change between normal and close framing only when a new point or section starts (roughly every 30–60 seconds) — calm and steady, suited to a financial report.",1,"RSLTO"],
+  ["Use the zoom changes to hide cuts where retakes or filler words were removed.",1],
+  ["Slow zoom / pan (Ken Burns) on photos, charts and B-roll.",1],
+  ["Our cameras record HD (1080p): keep every zoom within about 1.2× so the picture stays sharp; for a bigger close-up cut to Camera B instead of zooming further.",1],
+  ["No fast or bouncing zooms; smooth eased moves only.",1]]},
+ {id:"multicam",t:"Two / three cameras (multi-camera)",ty:"RSLTPO",items:[
+  ["Sync all cameras by their audio (and the clap at the start if there is one).",1],
+  ["Use one clean audio for the whole video: the separate recorder if there is one, else Camera A.",1],
+  ["Camera A (front) is the main angle; cut to Camera B (side / close-up) for emphasis, questions and important points.",1],
+  ["Switch angles only at the end of a sentence or a natural pause, never in the middle of a word.",1],
+  ["Hold each angle at least 3–4 seconds; avoid ping-ponging between angles.",1],
+  ["Use an angle change to hide cuts where retakes or filler words were removed.",1],
+  ["Cut to the person speaking; use the wide two-shot when both talk or react.",1,"P"],
+  ["Remove the green screen on every camera angle and match colour and brightness between cameras.",1],
+  ["In the Final Cut Pro project, give the cameras as a multicam clip so I can change the angle myself.",1]]},
+ {id:"sfx",t:"Sound effects",ty:"RSLTPO",items:[
+  ["Soft whoosh when a slide, chart or B-roll section appears.",1,"RSLTO"],
+  ["Light pop / click when an on-screen text card or name tag appears.",1,"RSLTO"],
+  ["Short ding or impact hit when an important point or number is highlighted — sparingly, about once every 30–60 seconds.",1,"RSLTO"],
+  ["Typing / ticker sound while the title or date band types onto the screen.",0,"RSLTO"],
+  ["Rising tone under the price animation if the stock went up, falling tone if it went down.",0,"RSLT"],
+  ["A subtle transition sound between chapters only.",1,"P"],
+  ["Use my own sounds from Reference/_Common/SFX first (whoosh, pop, ding, impact, typing); otherwise only free sounds that are safe to use on YouTube.",1],
+  ["Keep sound effects 18–24 dB below the voice and never on top of a spoken word.",1]]},
  {id:"concl",t:"Conclusion (after the main discussion)",ty:"RSLPO",items:[
   ["Summary of the topic: show 3–5 key points as an on-screen recap.",1,"RPO"],
   ["Super Thanks: thank the viewers and invite Super Thanks, with the Super Thanks graphic.",1,"RP"],
@@ -383,11 +422,15 @@ let typeCustom=ls.get("typeCustom",{});
 for(const k in typeCustom)TYPES[k]=typeCustom[k];
 const baseOf=t=>(TYPES[t]&&TYPES[t].base)||t;
 const SUBS=["Raw","Reference","Render"];
-const RAW_ITEMS=["Raw camera footage","Separate voice / audio recording","Speech script or notes (text)","Screen recordings","Second camera / guest camera","Previous edit to fix (re-edit)"];
-const REF_ITEMS=["Reference video (style, logo and watermark to copy)","HTML file (analysis dashboard — figures and charts)","B-roll clips","Information about the topic (PDF, notes, articles)","Company logos","Charts / images to show","Stock price data (CSV)","Office exterior / opening footage","Background music","Super Thanks / Subscribe / Hype graphics"];
+const RAW_ITEMS=["Raw camera footage","Separate voice / audio recording","Speech script or notes (text)","Screen recordings","Camera A footage (front / main)","Camera B footage (side / close-up)","Camera C footage","Previous edit to fix (re-edit)"];
+const REF_ITEMS=["Reference video (style, logo and watermark to copy)","HTML file (analysis dashboard — figures and charts)","B-roll clips","Information about the topic (PDF, notes, articles)","Company logos","Charts / images to show","Stock price data (CSV)","Office exterior / opening footage","Background music","Super Thanks / Subscribe / Hype graphics","Sound effects (SFX) files"];
 let chan=ls.get("chan","CN"),etype=ls.get("etype","S");if(!allCh()[chan])chan="CN";if(!TYPES[etype])etype="S";let _x,roots={},proj=null;
 let secsBy=ls.get("secsBy",{}),rawSel={},refSel={},alsoSel={},rawExtra=ls.get("rawExtra",[]),refExtra=ls.get("refExtra",[]);
-const secs=()=>secsBy[etype]||(secsBy[etype]=buildType(etype));
+const merged={};
+const secs=()=>{if(!secsBy[etype])secsBy[etype]=buildType(etype);else if(!merged[etype]){merged[etype]=1;const cur=secsBy[etype],ids=cur.map(s=>s.id);
+  const MIG={"Punch-in zoom (quick cut to a closer frame) on important lines and numbers.": "Punch-in zoom (quick cut to a slightly closer frame, about 1.15×) on important lines and numbers.", "Slow zoom in (push-in) while I make a strong or serious statement.": "Slow zoom in (push-in, about 1.0 to 1.1×) while I make a strong or serious statement.", "Keep the picture sharp: from 4K footage zoom up to 2×, from 1080p footage no more than about 1.2×.": "Our cameras record HD (1080p): keep every zoom within about 1.2× so the picture stays sharp; for a bigger close-up cut to Camera B instead of zooming further."};cur.forEach(s=>s.items.forEach(it=>{if(MIG[it.t])it.t=MIG[it.t]}));
+  cur.forEach(s=>s.items.forEach(it=>{if(it.t==="Change between normal and close framing every 10–20 seconds so the video stays lively.")it.t="Change between normal and close framing only when a new point or section starts (roughly every 30–60 seconds) — calm and steady, suited to a financial report."}));
+  buildType(etype).forEach((s,i)=>{if(!ids.includes(s.id)){cur.splice(Math.min(i,cur.length),0,s);ids.splice(Math.min(i,ids.length),0,s.id)}});localStorage.setItem("secsBy",JSON.stringify(secsBy))}return secsBy[etype]};
 const saveSecs=()=>ls.set("secsBy",secsBy);
 const isCB=()=>!!(allCh()[chan]||{}).stock;
 const cbOnly=t=>!isCB()&&/\{(company|symbol|days)\}/.test(t);
@@ -462,7 +505,7 @@ async function loadChan(){drawChan();
 $("chanPath").oninput=()=>{ls.set("pathTouched_"+chan,true);if($("locType").value!=="oth"){$("locType").value="oth";ls.set("loc_"+chan,{t:"oth",n:""});drawLoc()}saveChanForm();drawTree();render()};
 function drawTree(){const n=proj||projName();$("tree").textContent=`${chanInfo().folder}/
 ├─ Raw/${n}/        footage + EDIT_BRIEF.md
-├─ Reference/_Common/   logo, opening clip, office shots
+├─ Reference/_Common/   logo, opening clip, office shots, SFX/
 ├─ Reference/${n}/  reference video, HTML, B-roll, info
 ├─ Render/${n}/     finished videos
 └─ _Logs/             activity log`}
@@ -473,7 +516,9 @@ async function kvGet(k){try{const db=await idb();return await new Promise(r=>{co
 const hasFS="showDirectoryPicker" in window;
 if(!hasFS){$("fsNote").innerHTML="This browser can't open folders — open the app in <b>Chrome</b> or <b>Edge</b>. You can still use <b>Download brief</b>.";$("pickRoot").disabled=true}
 async function useRoot(h){roots[chan]=h;await kvSet("root_"+chan,h);$("newProj").disabled=$("refresh").disabled=false;$("reconnect").hidden=true;
-  $("fsNote").innerHTML='<span class="badge">Connected: '+esc(h.name)+'</span>';for(const s of SUBS)await h.getDirectoryHandle(s,{create:true});await listProjects()}
+  $("fsNote").innerHTML='<span class="badge">Connected: '+esc(h.name)+'</span>';for(const s of SUBS)await h.getDirectoryHandle(s,{create:true});
+  try{const c=await (await h.getDirectoryHandle("Reference",{create:true})).getDirectoryHandle("_Common",{create:true});await c.getDirectoryHandle("SFX",{create:true})}catch(e){}
+  await listProjects()}
 $("pickRoot").onclick=async()=>{try{const h=await showDirectoryPicker({mode:"readwrite",id:"cb_"+chan});
   if(await h.requestPermission({mode:"readwrite"})!=="granted"){toast("Please click 'Edit files' / Allow so the app can create folders");return}
   if(!ls.get("pathTouched_"+chan,false)&&$("locType").value==="desk"){$("chanPath").value="~/Desktop/"+h.name;saveChanForm()}await useRoot(h);render();logAct("connected folder "+h.name);toast(chanInfo().name+" folder connected")}
@@ -533,6 +578,33 @@ function addItem(inp,extra,sel,key){const t=$(inp).value.trim().slice(0,80);if(!
 $("rawAddBtn").onclick=()=>addItem("rawAdd",rawExtra,rawSel,"rawExtra");$("refAddBtn").onclick=()=>addItem("refAdd",refExtra,refSel,"refExtra");
 $("rawAdd").onkeydown=e=>{if(e.key==="Enter")$("rawAddBtn").onclick()};$("refAdd").onkeydown=e=>{if(e.key==="Enter")$("refAddBtn").onclick()};
 
+/* ================= ADD FILES (copy into the folders; never overwrites) ================= */
+let copying=false;
+async function uniqueName(dir,name){let n=name,i=2;const dot=name.lastIndexOf("."),b=dot>0?name.slice(0,dot):name,x=dot>0?name.slice(dot):"";
+  while(true){try{await dir.getFileHandle(n);n=`${b} (${i++})${x}`}catch(e){return n}}}
+async function addFiles(files,where){if(copying){toast("Please wait — still copying");return}
+  const r=roots[chan];if(!r){toast("First connect the channel folder in step 1");return}
+  if(!proj){if(!slug($("topic").value)){toast("Type the topic in step 4 first — the files go into that video's folder");$("topic").focus();return}if(!(await createFolders()))return}
+  files=[...files].filter(f=>f&&f.size>0);if(!files.length){toast("No files to add (folders cannot be dropped — open the folder and drag the files)");return}
+  let dir;const ref=await sub(r,"Reference",true);
+  if(where==="raw")dir=await sub(await sub(r,"Raw",true),proj,true);
+  else{const d=$("refDest").value;dir=d==="video"?await sub(ref,proj,true):d==="common"?await sub(ref,"_Common",true):await sub(await sub(ref,"_Common",true),"SFX",true)}
+  const total=files.reduce((s,f)=>s+f.size,0);let done=0;copying=true;$("copyBox").hidden=false;
+  try{for(let k=0;k<files.length;k++){const f=files[k],pre=(where==="raw"&&camsN()>1)?$("camSrc").value:"",base=safeName(f.name)||("file"+k),name=await uniqueName(dir,(pre&&!base.startsWith(pre)?pre:"")+base);
+      const fh=await dir.getFileHandle(name,{create:true}),ws=await fh.createWritable(),rd=f.stream().getReader();
+      while(true){const {done:end,value}=await rd.read();if(end)break;await ws.write(value);done+=value.byteLength;
+        $("copyBar").style.width=(100*done/total).toFixed(1)+"%";$("copyMsg").textContent=`Copying ${k+1} of ${files.length}: ${name} — ${(done/1e9).toFixed(2)} of ${(total/1e9).toFixed(2)} GB`}
+      await ws.close()}
+    $("copyMsg").textContent=`✓ ${files.length} file(s) added`;logAct(`added ${files.length} file(s) to ${where==="raw"?"Raw":"Reference"}/${proj}`);toast(`${files.length} file(s) copied — the originals are untouched`)}
+  catch(e){$("copyMsg").textContent="Copy stopped: "+e.message+" (check free space on the drive)";toast("Copy stopped: "+e.message)}
+  finally{copying=false;showFiles();listProjects()}}
+function hookDrop(zone,pick,where){const z=$(zone),p=$(pick);z.onclick=()=>p.click();p.onchange=()=>{const fl=[...p.files];p.value="";addFiles(fl,where)};
+  z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over")});z.addEventListener("dragleave",()=>z.classList.remove("over"));
+  z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("over");
+    const items=[...(e.dataTransfer.items||[])],dirs=items.filter(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()&&i.webkitGetAsEntry().isDirectory).length;
+    const fl=[...e.dataTransfer.files];if(dirs)toast("Folders are skipped — open the folder and drag the files themselves");addFiles(fl,where)})}
+hookDrop("rawDrop","rawPick","raw");hookDrop("refDrop","refPick","ref");
+window.addEventListener("dragover",e=>e.preventDefault());window.addEventListener("drop",e=>e.preventDefault());
 /* ================= INSTRUCTIONS ================= */
 function drawSecs(){const box=$("secs");box.innerHTML="";
   secs().forEach((s,si)=>{const w=document.createElement("div");w.className="sec"+(s.on?"":" off");
@@ -546,7 +618,7 @@ function drawSecs(){const box=$("secs");box.innerHTML="";
       const [c,t]=r.querySelectorAll("input");t.value=it.t;
       c.onchange=()=>{it.on=c.checked;saveSecs();render()};t.oninput=()=>{it.t=t.value;saveSecs();render()};
       r.querySelector(".x").onclick=()=>{s.items.splice(ii,1);saveSecs();drawSecs();render()};b.appendChild(r)});
-    box.appendChild(w)});
+    if(s.id==="multicam")w.dataset.multicam="1";box.appendChild(w)});
   const sf=document.createElement("div");sf.className="sec";sf.innerHTML=`<div class="sech"><span class="lock">🔒</span><b>Safety rules (always included)</b></div><div class="secb">${SAFETY.map(x=>`<div class="item mut">✓ ${esc(x)}</div>`).join("")}</div>`;box.appendChild(sf)}
 
 /* ================= PRESETS ================= */
@@ -557,7 +629,7 @@ $("loadPreset").onclick=()=>{const v=$("presetSel").value;if(v==="__def")secsBy[
 $("savePreset").onclick=()=>{const n=(prompt("Name for this preset:")||"").trim().slice(0,40);if(!n)return;const p=ls.get(pkey(),{});p[n]={secs:clone(secs()),lang:$("lang").value,dur:$("dur").value,openSec:$("openSec").value};ls.set(pkey(),p);drawPresets();$("presetSel").value=n;toast("Preset saved for "+chanInfo().name+" · "+TYPES[etype].n)};
 
 /* ================= BRIEF ================= */
-const FIELDS=["epNo","fcp","capLang","lang","dur","openSec","company","symbol","days","title","dateline","office","notes","fileNotes","topic"];
+const FIELDS=["cams","epNo","fcp","capLang","lang","dur","openSec","company","symbol","days","title","dateline","office","notes","fileNotes","topic"];
 function allSettings(){const o={etype,secs:secs(),rawSel,refSel,alsoSel,rawExtra,refExtra,app:BUILD};FIELDS.forEach(k=>o[k]=$(k).value);return o}
 function applyAll(o){if(!o)return;if(o.etype&&TYPES[o.etype]){etype=o.etype;drawTypes()}if(o.secs)secsBy[etype]=o.secs;
   if(o.rawSel)rawSel=o.rawSel;if(o.refSel)refSel=o.refSel;(o.rawExtra||[]).forEach(t=>{if(!rawExtra.includes(t))rawExtra.push(t)});(o.refExtra||[]).forEach(t=>{if(!refExtra.includes(t))refExtra.push(t)});
@@ -568,6 +640,8 @@ const P=(...a)=>[$("chanPath").value,...a].join(sep());
 function fill(t){const m={company:$("company").value||"the company",symbol:$("symbol").value||"the NSE symbol",days:$("days").value,title:$("title").value||"(decide a sharp title from the speech)",
   dateline:$("dateline").value,office:$("office").value||"our office",openSec:$("openSec").value,dur:$("dur").value,lang:$("lang").value,spec:TYPES[etype].spec};
   return t.replace(/\{(\w+)\}/g,(x,k)=>k in m?m[k]:x)}
+const vertType=()=>["S","L","T"].includes(baseOf(etype));
+const camsN=()=>vertType()?1:+($("cams")&&$("cams").value||1);
 const keep=i=>i.on&&i.t.trim()&&!cbOnly(i.t)&&!dup(i.t)&&!(!(+$("openSec").value)&&/\{openSec\}/.test(i.t));
 function brief(){const c=chanInfo(),n=proj||projName(),T=TYPES[etype],sel=o=>Object.keys(o).filter(k=>o[k]),also=sel(alsoSel);
   let b=`# EDIT BRIEF — ${c.name}
@@ -583,6 +657,7 @@ Written: ${new Date().toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST · 
 ## 2. Language and length
 - Language: ${$("lang").value}
 - Maximum duration: ${$("dur").value} minutes${+$("openSec").value?` · opening about ${$("openSec").value} s`:" · no opening sequence"}
+- Cameras: ${camsN()===1?"1 camera":camsN()+" cameras (files named CamA_, CamB_"+(camsN()>2?", CamC_":"")+")"}
 - Format: ${T.spec} → Render/${n}/${n}_${T.file}.mp4
 ${also.length?"- Also make: "+also.join("; ")+"\n":""}
 ${epType()?`## 3. Episode and date
@@ -599,12 +674,13 @@ Reference: ${sel(refSel).join("; ")||"nothing"}
 ${$("fileNotes").value.trim()?"Note: "+$("fileNotes").value.trim()+"\n":""}
 ## 6. Editing instructions
 `;
-  let k=0;for(const s of secs()){if(!s.on)continue;const its=s.items.filter(keep);if(!its.length)continue;
+  let k=0;for(const s of secs()){if(!s.on||(s.id==="multicam"&&camsN()<2))continue;const its=s.items.filter(keep);if(!its.length)continue;
     b+=`\n### 6.${++k} ${s.t}\n`+its.map(i=>"- "+fill(i.t)).join("\n")+"\n"}
   b+=capSection(++k);
   if($("fcp").checked)b+=fcpSection(++k);
   if($("notes").value.trim())b+=`\n### My extra instructions\n${$("notes").value.trim()}\n`;
   b+=`\n## Safety rules\n`+SAFETY.map(x=>"- "+x).join("\n")+"\n";return b}
+$("cams").value=ls.get("cams",1);$("cams").addEventListener("change",()=>{if(!vertType())ls.set("cams",$("cams").value)});
 function capSection(k){const c=longType()?$("capLang").value:"none";let L;
   if(c==="none")L=["Do NOT add captions or subtitles of the speech — do not type out what the presenter says.","On-screen text only for the title, date band, names, key statements and graphics listed above."];
   else if(baseOf(etype)==="P")L=[`Give ${c} captions as a separate .srt file only (not burned in).`];
@@ -628,7 +704,11 @@ function drawTL(){const d=Math.max(.1,+$("dur").value||1)*60,o=Math.min(d,+$("op
   `<div style="background:var(--or);width:${mid/d*100}%">${isCB()&&$("company").value?esc($("company").value)+" analysis":"Main content"} · ${Math.floor(mid/60)}m ${Math.round(mid%60)}s</div>`+
   (end?`<div style="background:#8A4A10;width:${end/d*100}%">Summary · thanks · subscribe</div>`:"");
   $("tlNote").textContent=`${TYPES[etype].n} · up to ${$("dur").value} min`}
-function render(){$("cbFields").hidden=!isCB();$("capBox").hidden=!longType();
+let lastVert=null;
+function camUI(){const v=vertType();$("cams").disabled=v;if(v)$("cams").value="1";else if(lastVert!==false)$("cams").value=ls.get("cams",1);lastVert=v;const n=camsN();document.querySelectorAll('#secs [data-multicam]').forEach(e=>e.hidden=n<2);$("camPickRow").hidden=n<2;
+  [...$("camSrc").options].forEach(o=>{if(o.value==="CamC_")o.hidden=n<3});
+  $("camNote").textContent=v?"Shorts, Reels and Stories use one camera. Tip: turn the camera sideways (vertical) for the sharpest picture.":n<2?"":"Shoot tip: same resolution and frame rate on all cameras, clap once at the start, both cameras recording sound. Name files by camera when adding them (step 5)."}
+function render(){camUI();$("cbFields").hidden=!isCB();$("capBox").hidden=!longType();
   document.querySelectorAll("#secs .item").forEach(r=>{const t=r.querySelector("input[type=text]");if(!t)return;const off=cbOnly(t.value)||dup(t.value);r.style.opacity=off?.4:1;r.title=off?(cbOnly(t.value)?"Cauvery Business only — left out for this channel":"Replaced by the company line for Cauvery Business"):""});
   $("prompt").textContent=promptText();$("briefPrev").textContent=brief();drawTL();
   $("hdrProj").innerHTML=`<b>${esc(chanInfo().name)}</b> · ${esc(TYPES[etype].n)}<br>${esc(proj||projName())}`}
@@ -647,7 +727,7 @@ $("save").onclick=async()=>{const r=roots[chan];if(!r||!hasFS){$("dl").onclick()
   try{const d=await sub(await sub(r,"Raw",true),proj,true);const old=await readFile(d,"EDIT_BRIEF.md");
     if(old!==null){const h=await sub(d,"_brief_history",true);await writeFile(h,"EDIT_BRIEF_"+stamp()+".md",old)}
     await writeFile(d,"EDIT_BRIEF.md",brief());await writeFile(d,"brief.json",JSON.stringify(allSettings(),null,1));
-    await copy(promptText());if(epType())ls.set(epKey(),Math.max(ls.get(epKey(),0),+$("epNo").value||0));await logAct("saved brief "+proj+" ("+TYPES[etype].n+")");toast("Brief saved · prompt copied — paste it into Claude");showFiles()}
+    await copy(promptText());if(epType())ls.set(epKey(),Math.max(ls.get(epKey(),0),+$("epNo").value||0));await logAct("saved brief "+proj+" ("+TYPES[etype].n+")");toast("Brief saved · prompt copied — paste it into Claude");showFiles();listProjects()}
   catch(e){toast("Could not save: "+e.message)}};
 
 /* ================= ACTIVITY LOG ================= */
@@ -702,12 +782,12 @@ $("mic").onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.lang=$("micLang
 
 /* ================= INLINE HELP ================= */
 const HELP=[
-`<ol><li>Open the drop-down and pick what you are making: YouTube Regular, Short, Reel, Story, Podcast or Others.</li><li>Only the instructions for that type appear in step 6; the duration and opening length change too.</li><li>Making something new often? Choose <b>＋ Add new type…</b>, name it, pick the type to start from. Remove a custom type with <b>Remove</b>.</li></ol><b>First time on a laptop (once)</b><ol><li>Open this file in Chrome or Edge; make it an app: ⋮ › Cast, save and share › Create shortcut › tick Open as window.</li><li>Decide where each channel's videos live (Desktop, external SSD, another drive, Google Drive or NAS), make one folder per channel there and put the scripts folder inside each.</li><li>⚙ Settings › set a password, then Export settings to keep a backup.</li><li>In the Claude desktop app: ＋ › Add folder › the channel folder.</li></ol>`,
+`<ol><li>Open the drop-down and pick what you are making: YouTube Regular, Short, Reel, Story, Podcast or Others.</li><li>Only the instructions for that type appear in step 6; the duration and opening length change too.</li><li>Making something new often? Choose <b>＋ Add new type…</b>, name it, pick the type to start from. Remove a custom type with <b>Remove</b>.</li></ol><b>First time on a laptop (once)</b><ol><li>Open this file in Chrome or Edge; make it an app: ⋮ › Cast, save and share › Create shortcut › tick Open as window.</li><li>Decide where each channel's videos live (Desktop, external SSD, another drive, Google Drive or NAS), make one folder per channel there and put the scripts folder inside each.</li><li>Optional: put your own sound effects in Reference/_Common/SFX, named by use — whoosh, pop, ding, impact, typing.</li><li>⚙ Settings › set a password, then Export settings to keep a backup.</li><li>In the Claude desktop app: ＋ › Add folder › the channel folder.</li></ol>`,
 `<ol><li>Pick the channel from the drop-down (or <b>＋ Add new channel…</b> — give a name and a folder name).</li><li>Choose <b>where to keep its videos</b>: Desktop, external SSD (best for big files), another drive, Google Drive, NAS or any folder; type the drive name if asked.</li><li>Check the <b>full folder path</b> is exactly right — Claude uses it.</li><li>First time only: click <b>Connect this folder</b>, select that folder, click <b>Edit files</b> when Chrome asks. The app makes Raw, Reference and Render inside it.</li></ol>`,
 `<ol><li>Choose the language of the speech.</li><li>Captions (long videos only): leave <b>No captions</b> for Tamil unless you want the speech typed on screen.</li><li>Set the maximum minutes and the opening seconds — the coloured bar shows how the time is shared.</li><li>Keep <b>Final Cut Pro project</b> ticked to be able to correct it yourself.</li><li>Tick any extra versions (e.g. also a Reel).</li></ol>`,
 `<ol><li>Check the date — it is today by default.</li><li>Shorts, Reels, Stories: the top band reads NEW | 22 NOVEMBER 2026. YouTube Regular and Podcast: it reads EPISODE 12 instead — the number goes up by one each time you save a brief; tick “Also show the date” if you want the date too.</li><li>The band fills itself; type over it to change it.</li><li>Earlier videos are listed below — click one to reopen it with all its settings.</li></ol>`,
 `<ol><li>Type a short topic, e.g. <i>Vodafone Idea Q2</i> — it becomes the folder name.</li><li>Type the on-screen title, or leave it blank for Claude to suggest one.</li><li>Cauvery Business: fill company, NSE symbol and the days of price movement.</li><li>Click <b>＋ Create folders for this video</b>, then copy the footage into Raw/&lt;date_topic&gt; and material into Reference/&lt;date_topic&gt;, and click <b>Refresh</b>.</li></ol>`,
-`<ol><li>Tick what you put in Raw and in Reference — the file list below shows what is really there.</li><li>Something not in the list? Type it in <b>Add another…</b> and press <b>＋ Add</b>; it stays for next time (× removes it).</li><li>Use the note box for things like “clip 2 is the good take”.</li></ol>`,
+`<ol><li><b>Add the files:</b> drag your footage onto <b>⬆ Add footage to Raw</b> (or click it and choose the files); material goes on <b>⬆ Add material to Reference</b> — choose this video, _Common or SFX. Files are copied; the originals stay where they were. You can also copy them in Finder / File Explorer.</li><li>Tick what you put in Raw and in Reference — the file list below shows what is really there.</li><li>Something not in the list? Type it in <b>Add another…</b> and press <b>＋ Add</b>; it stays for next time (× removes it).</li><li>Use the note box for things like “clip 2 is the good take”.</li></ol>`,
 `<ol><li>Each grey heading is a section: untick it to leave the whole section out.</li><li>Untick a line to leave it out; click a line to change its words; × deletes it; <b>＋ Add line</b> adds your own.</li><li>Words in {curly brackets} are filled in from the steps above.</li><li>Like this setup? <b>Save as preset</b>; next time choose it and click <b>Load</b>. “House default” restores the original.</li><li>Type or 🎤 speak anything extra at the bottom.</li></ol>`,
 `<ol><li>Click <b>Save brief &amp; copy prompt</b> — the brief is saved in Raw/&lt;date_topic&gt; and a one-line prompt is copied.</li><li>In the Claude desktop app, open a chat that has this channel folder added (＋ › Add folder), paste and send.</li><li>Finished video, captions and the FCP folder appear in Render/&lt;date_topic&gt;.</li><li>Need a fix? Tell Claude what to change (a _v2 is made) or open the FCP project in Final Cut Pro (File › Import › XML).</li></ol>`];
 document.querySelectorAll("main>.card").forEach((c,i)=>{if(!HELP[i])return;const h2=c.querySelector("h2");const b=document.createElement("button");b.className="hbtn";b.textContent="❓ How";
