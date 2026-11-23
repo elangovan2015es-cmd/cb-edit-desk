@@ -115,6 +115,9 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
   <h2>Type of edit</h2>
   <div class="row"><select id="etype" style="flex:1"></select><button class="ghost sm" id="delType" hidden title="Remove this custom type">Remove</button></div>
   <p class="mut" id="typeDesc" style="margin:6px 0 0"></p>
+  <div class="row" style="margin-top:10px"><b style="font-size:14px">Edit level</b>
+    <select id="level" style="width:auto;font-weight:600"><option value="essential">Essential — clean, calm, core only</option><option value="standard">Standard — plus zoom, names, key text, sound effects</option><option value="full">Full — every feature</option><option value="custom">Custom — my own ticks</option></select>
+    <span class="mut" id="levelCount"></span></div>
 </div>
 
 <div class="card">
@@ -264,7 +267,7 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
 
 <script>
 "use strict";
-const BUILD="v4.9 app · build 20261123-1003 IST";
+const BUILD="v5.1 app · build 20261123-1111 IST";
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2600)};
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -275,6 +278,7 @@ $("build").textContent=BUILD;
 /* ================= TYPES ================= */
 const TYPES={
  R:{n:"YouTube Regular (long video)",d:"16:9 landscape video for the main YouTube channel, with chapters, subscribe/bell/Hype requests, summary, Super Thanks and end screen.",spec:"16:9, 1920×1080, 25 fps",dur:10,open:10,file:"YouTube",also:["Facebook video","LinkedIn video","3 short clips (9:16) for Shorts / Reels"]},
+ E:{n:"YouTube Explainer (teaching style)",base:"R",builtin:true,d:"Long teaching video: you on two cameras, simple slides and original cartoon illustrations that explain one idea at a time, zoom in / out, worked examples with numbers.",spec:"16:9, 1920×1080, 25 fps",dur:12,open:6,file:"Explainer",cams:2,also:["Facebook video","LinkedIn video","3 short clips (9:16) for Shorts / Reels"]},
  S:{n:"YouTube Short",d:"Vertical 9:16 Short, up to 3 minutes, fast and crisp, news-bulletin style.",spec:"9:16 vertical, 1080×1920, 30 fps, maximum 3 minutes",dur:2,open:6,file:"Short",also:["Instagram Reel","Facebook Reel"]},
  L:{n:"Reel (Instagram / Facebook)",d:"Vertical 9:16 Reel, up to 3 minutes, text kept inside the centre safe zone.",spec:"9:16 vertical, 1080×1920, 30 fps, maximum 3 minutes, text inside the centre safe zone",dur:1.5,open:4,file:"Reel",also:["YouTube Short","Facebook Reel"]},
  T:{n:"Story (Instagram / Facebook / WhatsApp)",d:"Vertical story cut into 15-second parts, each part standing on its own, with stickers and a link to the full video.",spec:"9:16 vertical, 1080×1920, 30 fps, cut into 15-second parts",dur:0.5,open:0,file:"Story",also:["WhatsApp Status (same parts)"]},
@@ -340,6 +344,16 @@ const LIB=[
   ["Each 15-second part must stand on its own with its own headline text.",1,"T"],
   ["Avoid excessive animations or flashy effects.",1],
   ["The editing should feel like a professional financial news bulletin, not a conventional talking-head video.",1,"RSLO"]]},
+ {id:"explain",t:"Teaching visuals – slides and cartoons",ty:"E",items:[
+  ["Teach one idea at a time: after each idea, show a simple slide that sums it up in one line with one picture.",1],
+  ["Use original cartoon illustrations for the examples (e.g. an employee receiving ESOPs, waiting for vesting, selling shares) — simple flat 2D characters in our own style and channel colours.",1],
+  ["Never copy another channel's characters, artwork, slide design or logo: the style may inspire us, but every visual must be our own.",1],
+  ["Animated diagrams and timelines for processes (e.g. grant → vesting → exercise → sale), built step by step as I speak.",1],
+  ["Worked example with real numbers on screen, each number appearing as I say it.",1],
+  ["Key terms as definition cards: the term plus a one-line meaning.",1],
+  ["Slides: light background, channel colours, large readable text, one idea per slide, no clutter.",1],
+  ["Alternate between me on camera and slides/cartoons; full-screen slide when the visual matters, slide beside me when I am explaining it.",1],
+  ["Recap slide with 3–5 key points before the conclusion.",1]]},
  {id:"zoom",t:"Zoom in / zoom out (camera moves)",ty:"RSLTPO",items:[
   ["Punch-in zoom (quick cut to a slightly closer frame, about 1.15×) on important lines and numbers.",1],
   ["Slow zoom in (push-in, about 1.0 to 1.1×) while I make a strong or serious statement.",1,"RSLO"],
@@ -411,7 +425,7 @@ const SAFETY=["Never delete, move or overwrite anything in Raw or Reference — 
  "Use only my own material or public-domain / CC0 footage; record sources in Render/<video>/credits.txt.",
  "Do not upload, post or share anything; leave the finished files in Render for me to check.",
  "To save disk space, when the edit is finished remove only your own temporary files in Render/<video>/_work (frames, masks, test renders); keep the final videos, captions and the FCP project with its Media."];
-function buildType(t0){const t=baseOf(t0);return LIB.filter(s=>s.ty.includes(t)).map(s=>({id:s.id,t:s.t,on:true,items:s.items.filter(i=>(i[2]||s.ty).includes(t)).map(i=>({t:i[0],on:!!i[1]}))}))}
+function buildType(t0){const t=baseOf(t0),has=x=>x.includes(t)||x.includes(t0);return LIB.filter(s=>has(s.ty)).map(s=>({id:s.id,t:s.t,on:true,items:s.items.filter(i=>has(i[2]||s.ty)).map(i=>({t:i[0],on:!!i[1]}))}))}
 
 /* ================= STATE ================= */
 const BUILTIN_CH={CB:{name:"Cauvery Business",folder:"Video",stock:true},CN:{name:"Cauvery News",folder:"News",stock:false}};
@@ -437,8 +451,8 @@ const cbOnly=t=>!isCB()&&/\{(company|symbol|days)\}/.test(t);
 const dup=t=>isCB()&&/main content\.$/.test(t)&&/\{dur\}/.test(t); // generic line hidden when company line exists
 
 /* ================= TYPE ================= */
-function drawTypes(){const s=$("etype");s.innerHTML="";for(const k in TYPES){const o=document.createElement("option");o.value=k;o.textContent=TYPES[k].n+(TYPES[k].base?"  (custom)":"");s.appendChild(o)}
-  const a=document.createElement("option");a.value="__add";a.textContent="＋ Add new type…";s.appendChild(a);s.value=etype;$("delType").hidden=!TYPES[etype].base}
+function drawTypes(){const s=$("etype");s.innerHTML="";for(const k in TYPES){const o=document.createElement("option");o.value=k;o.textContent=TYPES[k].n+(TYPES[k].base&&!TYPES[k].builtin?"  (custom)":"");s.appendChild(o)}
+  const a=document.createElement("option");a.value="__add";a.textContent="＋ Add new type…";s.appendChild(a);s.value=etype;$("delType").hidden=!TYPES[etype].base||!!TYPES[etype].builtin}
 drawTypes();
 $("fcp").checked=ls.get("fcpOn",true);$("fcp").addEventListener("change",()=>ls.set("fcpOn",$("fcp").checked));
 function applyType(first){$("etype").value=etype;const T=TYPES[etype];$("typeDesc").textContent=T.d;$("typeName").textContent=T.n;
@@ -446,8 +460,8 @@ function applyType(first){$("etype").value=etype;const T=TYPES[etype];$("typeDes
   alsoSel=ls.get("also_"+etype,{});$("alsoBox").innerHTML="";T.also.forEach(a=>{const l=document.createElement("label");l.className="chk";
     l.innerHTML=`<input type="checkbox" ${alsoSel[a]?"checked":""}><span></span>`;l.querySelector("span").textContent=a;
     l.querySelector("input").onchange=e=>{alsoSel[a]=e.target.checked;ls.set("also_"+etype,alsoSel);render()};$("alsoBox").appendChild(l)});
-  drawSecs();drawPresets();if(typeof epRefresh==="function"&&!first)epRefresh();if(!first)render()}
-$("etype").onchange=()=>{if($("etype").value==="__add"){$("etype").value=etype;openAddType();return}etype=$("etype").value;ls.set("etype",etype);$("delType").hidden=!TYPES[etype].base;applyType()};
+  drawSecs();drawPresets();if(typeof levelRefresh==="function")levelRefresh();if(typeof epRefresh==="function"&&!first)epRefresh();if(!first)render()}
+$("etype").onchange=()=>{if($("etype").value==="__add"){$("etype").value=etype;openAddType();return}etype=$("etype").value;ls.set("etype",etype);$("delType").hidden=!TYPES[etype].base||!!TYPES[etype].builtin;if(TYPES[etype].cams&&!ls.get("camsSet_"+etype,false)){ls.set("cams",TYPES[etype].cams);ls.set("camsSet_"+etype,true);lastVert=null}applyType()};
 function openAddType(){const b=$("atBase");b.innerHTML="";["R","S","L","T","P","O"].forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=TYPES[k].n;b.appendChild(o)});
   b.value=baseOf(etype);const fillB=()=>{const T=TYPES[b.value];$("atSpec").value=T.spec;$("atDur").value=T.dur;$("atOpen").value=T.open};b.onchange=fillB;fillB();
   $("atName").value="";$("atDesc").value="";$("addType").classList.add("on");setTimeout(()=>$("atName").focus(),50)}
@@ -610,7 +624,7 @@ function drawSecs(){const box=$("secs");box.innerHTML="";
   secs().forEach((s,si)=>{const w=document.createElement("div");w.className="sec"+(s.on?"":" off");
     w.innerHTML=`<div class="sech"><input type="checkbox" ${s.on?"checked":""}><b></b><button class="ghost sm add">+ Add line</button></div><div class="secb"></div>`;
     w.querySelector("b").textContent=s.t;
-    w.querySelector(".sech input").onchange=e=>{s.on=e.target.checked;w.classList.toggle("off",!s.on);saveSecs();render()};
+    w.querySelector(".sech input").onchange=e=>{s.on=e.target.checked;$("level").value="custom";ls.set("level_"+chan+"_"+etype,"custom");w.classList.toggle("off",!s.on);saveSecs();render()};
     w.querySelector(".add").onclick=()=>{s.items.push({t:"",on:true});saveSecs();drawSecs();const ins=box.children[si].querySelectorAll(".item input[type=text]");ins[ins.length-1].focus()};
     const b=w.querySelector(".secb");
     s.items.forEach((it,ii)=>{const r=document.createElement("div");r.className="item";
@@ -621,6 +635,17 @@ function drawSecs(){const box=$("secs");box.innerHTML="";
     if(s.id==="multicam")w.dataset.multicam="1";box.appendChild(w)});
   const sf=document.createElement("div");sf.className="sec";sf.innerHTML=`<div class="sech"><span class="lock">🔒</span><b>Safety rules (always included)</b></div><div class="secb">${SAFETY.map(x=>`<div class="item mut">✓ ${esc(x)}</div>`).join("")}</div>`;box.appendChild(sf)}
 
+/* ================= EDIT LEVEL ================= */
+const LEVELS={essential:["main","title","subj","brand","disc","short","clean","final","extras","obj","multicam"],
+  standard:["open","main","title","subj","names","brand","cta","fx","explain","zoom","multicam","sfx","concl","disc","short","clean","final","extras","obj"]};
+const STD_OFF=[/^Short ding or impact/,/^Ask viewers to press Hype/,/^Ask a question for viewers/];
+function applyLevel(lv){if(lv==="custom")return;const def={};buildType(etype).forEach(s=>s.items.forEach(i=>def[s.id+"|"+i.t]=i.on));
+  secs().forEach(s=>{s.on=lv==="full"?true:LEVELS[lv].includes(s.id);
+    s.items.forEach(it=>{const k=s.id+"|"+it.t;if(!(k in def))return;it.on=lv==="full"?true:(lv==="standard"&&STD_OFF.some(r=>r.test(it.t)))?false:def[k]})});
+  saveSecs();drawSecs();render()}
+$("level").onchange=()=>{const lv=$("level").value;ls.set("level_"+chan+"_"+etype,lv);applyLevel(lv);if(lv!=="custom")toast("Edit level: "+$("level").selectedOptions[0].text.split(" —")[0])};
+function levelRefresh(){$("level").value=ls.get("level_"+chan+"_"+etype,"custom")}
+function levelCount(){const n=secs().filter(s=>s.on&&!(s.id==="multicam"&&camsN()<2)).reduce((a,s)=>a+s.items.filter(keep).length,0);$("levelCount").textContent=`≈ ${n} instructions`}
 /* ================= PRESETS ================= */
 const pkey=()=>"presets_"+chan+"_"+etype;
 function drawPresets(){const s=$("presetSel");s.innerHTML="<option value='__def'>House default</option>";Object.keys(ls.get(pkey(),{})).forEach(k=>{const o=document.createElement("option");o.value=o.textContent=k;s.appendChild(o)})}
@@ -657,6 +682,7 @@ Written: ${new Date().toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})} IST · 
 ## 2. Language and length
 - Language: ${$("lang").value}
 - Maximum duration: ${$("dur").value} minutes${+$("openSec").value?` · opening about ${$("openSec").value} s`:" · no opening sequence"}
+- Edit level: ${({essential:"Essential — keep it clean, calm and uncluttered; do only what is listed",standard:"Standard",full:"Full",custom:"Custom"})[$("level").value]}
 - Cameras: ${camsN()===1?"1 camera":camsN()+" cameras (files named CamA_, CamB_"+(camsN()>2?", CamC_":"")+")"}
 - Format: ${T.spec} → Render/${n}/${n}_${T.file}.mp4
 ${also.length?"- Also make: "+also.join("; ")+"\n":""}
@@ -708,7 +734,7 @@ let lastVert=null;
 function camUI(){const v=vertType();$("cams").disabled=v;if(v)$("cams").value="1";else if(lastVert!==false)$("cams").value=ls.get("cams",1);lastVert=v;const n=camsN();document.querySelectorAll('#secs [data-multicam]').forEach(e=>e.hidden=n<2);$("camPickRow").hidden=n<2;
   [...$("camSrc").options].forEach(o=>{if(o.value==="CamC_")o.hidden=n<3});
   $("camNote").textContent=v?"Shorts, Reels and Stories use one camera. Tip: turn the camera sideways (vertical) for the sharpest picture.":n<2?"":"Shoot tip: same resolution and frame rate on all cameras, clap once at the start, both cameras recording sound. Name files by camera when adding them (step 5)."}
-function render(){camUI();$("cbFields").hidden=!isCB();$("capBox").hidden=!longType();
+function render(){camUI();levelCount();$("cbFields").hidden=!isCB();$("capBox").hidden=!longType();
   document.querySelectorAll("#secs .item").forEach(r=>{const t=r.querySelector("input[type=text]");if(!t)return;const off=cbOnly(t.value)||dup(t.value);r.style.opacity=off?.4:1;r.title=off?(cbOnly(t.value)?"Cauvery Business only — left out for this channel":"Replaced by the company line for Cauvery Business"):""});
   $("prompt").textContent=promptText();$("briefPrev").textContent=brief();drawTL();
   $("hdrProj").innerHTML=`<b>${esc(chanInfo().name)}</b> · ${esc(TYPES[etype].n)}<br>${esc(proj||projName())}`}
@@ -782,7 +808,7 @@ $("mic").onclick=()=>{if(rec){rec.stop();return}rec=new SR();rec.lang=$("micLang
 
 /* ================= INLINE HELP ================= */
 const HELP=[
-`<ol><li>Open the drop-down and pick what you are making: YouTube Regular, Short, Reel, Story, Podcast or Others.</li><li>Only the instructions for that type appear in step 6; the duration, opening length, episode band, captions and camera choices change with it.</li><li>Shorts, Reels and Stories always use <b>one camera</b> and show NEW | date on top; YouTube Regular and Podcast can use 2–3 cameras, show EPISODE No. and can have captions.</li><li>Making something new often? Choose <b>＋ Add new type…</b>, name it, pick the type to start from. Remove a custom type with <b>Remove</b>.</li></ol><b>First time on a laptop (once)</b><ol><li>Open the app address in Chrome and click <b>⬇ Install app</b> (or ⋮ › Cast, save and share › Install).</li><li>Decide where each channel's videos live (Desktop, external SSD, another drive, Google Drive or NAS) and make one folder per channel there (e.g. <b>Video</b>, <b>News</b>); put the <b>scripts</b> folder inside each.</li><li>Connect each channel folder in step 1 — the app makes Raw, Reference › _Common › SFX and Render.</li><li>Put your logo, office clips and sound effects (whoosh, pop, ding, impact, typing, rise, fall) in <b>Reference › _Common</b> and its <b>SFX</b> folder.</li><li>⚙ Settings › set a <b>password</b> (letters + numbers), then <b>Export settings</b> to keep a backup.</li><li>In the Claude desktop app: ＋ › <b>Add folder</b> › the channel folder.</li></ol><b>After an app update:</b> check the version at the bottom; for each type you use, step 6 › <b>Load → House default</b> brings in the newest wording.`,
+`<ol><li>Open the drop-down and pick what you are making: YouTube Regular, <b>YouTube Explainer (teaching style: slides, cartoons, two cameras, zooms)</b>, Short, Reel, Story, Podcast or Others.</li><li>Only the instructions for that type appear in step 6; the duration, opening length, episode band, captions and camera choices change with it.</li><li>Shorts, Reels and Stories always use <b>one camera</b> and show NEW | date on top; YouTube Regular and Podcast can use 2–3 cameras, show EPISODE No. and can have captions.</li><li><b>Edit level:</b> Essential (clean and calm — best for your first videos), Standard (adds zoom, names, key text, sound effects, subscribe, opening) or Full (everything). It ticks the sections in step 6 for you; changing a section yourself turns it to Custom.</li><li>Making something new often? Choose <b>＋ Add new type…</b>, name it, pick the type to start from. Remove a custom type with <b>Remove</b>.</li></ol><b>First time on a laptop (once)</b><ol><li>Open the app address in Chrome and click <b>⬇ Install app</b> (or ⋮ › Cast, save and share › Install).</li><li>Decide where each channel's videos live (Desktop, external SSD, another drive, Google Drive or NAS) and make one folder per channel there (e.g. <b>Video</b>, <b>News</b>); put the <b>scripts</b> folder inside each.</li><li>Connect each channel folder in step 1 — the app makes Raw, Reference › _Common › SFX and Render.</li><li>Put your logo, office clips and sound effects (whoosh, pop, ding, impact, typing, rise, fall) in <b>Reference › _Common</b> and its <b>SFX</b> folder.</li><li>⚙ Settings › set a <b>password</b> (letters + numbers), then <b>Export settings</b> to keep a backup.</li><li>In the Claude desktop app: ＋ › <b>Add folder</b> › the channel folder.</li></ol><b>After an app update:</b> check the version at the bottom; for each type you use, step 6 › <b>Load → House default</b> brings in the newest wording.`,
 `<ol><li>Pick the channel from the drop-down (or <b>＋ Add new channel…</b> — name, folder name, and tick “discusses listed companies” for stock channels). <b>Remove</b> takes a channel off the list only; its folders are not touched.</li><li>Choose <b>where to keep its videos</b>: Desktop, external SSD (best for big files), another drive, Google Drive, NAS or any folder; type the drive name if asked.</li><li>Check the <b>full folder path</b> is exactly right — Claude uses it.</li><li>First time only: click <b>Connect this folder</b>, select that channel folder (not the Desktop or a whole drive) and click <b>Edit files</b> when Chrome asks. The app creates <b>Raw</b>, <b>Reference › _Common › SFX</b> and <b>Render</b> inside it.</li><li>Later visits: if it says Reconnect, click it once.</li></ol>`,
 `<ol><li>Choose the language of the speech.</li><li>Captions (YouTube Regular and Podcast only): leave <b>No captions</b> for Tamil unless you want the speech typed on screen.</li><li>Set the maximum minutes and the opening seconds — the coloured bar shows how the time is shared.</li><li><b>Cameras used:</b> 1, 2 (A + B) or 3 (A + B + C) for long videos; Shorts, Reels and Stories are fixed at one camera. With 2–3 cameras a multi-camera section appears in step 6.</li><li>Keep <b>Final Cut Pro project</b> ticked to be able to correct it yourself (each part on its own layer, multicam angles, sound effects on their own track).</li><li>Tick any extra versions (e.g. also a Reel).</li></ol>`,
 `<ol><li>Check the date — it is today by default.</li><li>Shorts, Reels, Stories: the top band reads NEW | 22 NOVEMBER 2026. YouTube Regular and Podcast: it reads <b>EPISODE 12</b> instead — the number goes up by one each time you save a brief (you can type another number); tick “Also show the date” if you want the date too.</li><li>The band fills itself; type over it to change it.</li><li>Earlier videos are listed below — click one to reopen it with all its settings.</li></ol>`,
