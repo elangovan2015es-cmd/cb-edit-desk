@@ -173,6 +173,15 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
     <div><label class="l">Price movement — last days <span class="tok">{days}</span></label><input type="number" id="days" value="5" min="2" max="250"></div>
   </div>
   <label class="l">Office location for the opening <span class="tok">{office}</span></label><input type="text" id="office" maxlength="100" value="our office in Chennai">
+  <label class="l" style="margin-top:12px"><b style="color:var(--ink)">Market snapshot</b> — shown for 6 seconds after the disclaimer. Type the figures, or leave a box blank and Claude looks it up.</label>
+  <div class="g3">
+    <div><label class="l">Nifty 50 (today)</label><input type="text" id="mNifty" maxlength="30" placeholder="index points"></div>
+    <div><label class="l">USD / INR</label><input type="text" id="mUsd" maxlength="30" placeholder="₹ per $"></div>
+    <div><label class="l">Crude oil (Brent)</label><input type="text" id="mCrude" maxlength="30" placeholder="$ per barrel"></div>
+    <div><label class="l">Gold</label><input type="text" id="mGold" maxlength="30" placeholder="₹ per 10 g"></div>
+    <div><label class="l">Dollar Index (DXY)</label><input type="text" id="mDxy" maxlength="30" placeholder="index points"></div>
+    <div><label class="l">FII net investment (yesterday)</label><input type="text" id="mFii" maxlength="30" placeholder="₹ crore, + bought / − sold"></div>
+  </div>
   <div class="row" style="margin-top:10px"><button id="newProj" disabled>+ Create folders for this video</button><button class="ghost sm" id="refresh" disabled>Refresh</button>
     <span class="mut">Creates <b id="namePrev"></b> in Raw, Reference and Render.</span></div>
 </div>
@@ -259,7 +268,7 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
 
 <script>
 "use strict";
-const BUILD="v5.7 · build 20261125-1230 IST";
+const BUILD="v5.8 · build 20261125-1530 IST";
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2600)};
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -300,6 +309,12 @@ const LIB=[
   ["Show the title clearly: {title}",1]]},
  {id:"disc",t:"Disclaimer",ty:"RSLTPO",items:[
   ["Show the disclaimer at the start of the video: For information and education only. Not investment advice.",1]]},
+ {id:"mkt",t:"Market snapshot (after the disclaimer)",ty:"RSLTPO",items:[
+  ["Right after the disclaimer, before I start speaking, show a market snapshot — 6 seconds at most.",1],
+  ["Today's levels: {mkt}.",1],
+  ["Yesterday's FII net investment: {fii}.",1],
+  ["Show each figure as a number tile with a small chart beside it (green if up, red if down from the previous day); show FII as a buy / sell bar.",1],
+  ["Where I left a figure blank, take the official figure for the video date, and list every figure with its source in the report so I can check it.",1]]},
  {id:"subj",t:"Subject of discussion",ty:"RSLTPO",items:[
   ["What happened to {company} results?",1],
   ["What factors could support or derail {company}?",1],
@@ -616,8 +631,8 @@ function drawSecs(){const box=$("secs");box.innerHTML="";
   const sf=document.createElement("div");sf.className="sec";sf.innerHTML=`<div class="sech"><span class="lock">🔒</span><b>Safety rules (always included)</b></div><div class="secb">${SAFETY.map(x=>`<div class="item mut">✓ ${esc(x)}</div>`).join("")}</div>`;box.appendChild(sf)}
 
 /* ================= EDIT LEVEL ================= */
-const LEVELS={essential:["main","title","disc","subj","brand","clean","extras","obj","multicam"],
-  standard:["open","main","title","disc","subj","names","brand","cta","fx","explain","broll","zoom","multicam","sfx","concl","clean","extras","obj"]};
+const LEVELS={essential:["main","title","disc","mkt","subj","brand","clean","extras","obj","multicam"],
+  standard:["open","main","title","disc","mkt","subj","names","brand","cta","fx","explain","broll","zoom","multicam","sfx","concl","clean","extras","obj"]};
 const STD_OFF=[/^Short ding or impact/,/^Ask viewers to press Hype/,/^Ask a question for viewers/];
 function applyLevel(lv){if(lv==="custom")return;const def={};buildType(etype).forEach(s=>s.items.forEach(i=>def[s.id+"|"+i.t]=i.on));
   secs().forEach(s=>{s.on=lv==="full"?true:LEVELS[lv].includes(s.id);
@@ -636,7 +651,7 @@ $("loadPreset").onclick=()=>{const v=$("presetSel").value;if(v==="__def")secsBy[
 $("savePreset").onclick=()=>{const n=(prompt("Name for this preset:")||"").trim().slice(0,40);if(!n)return;const p=ls.get(pkey(),{});p[n]={secs:clone(secs()),lang:$("lang").value,dur:$("dur").value,openSec:$("openSec").value};ls.set(pkey(),p);drawPresets();$("presetSel").value=n;toast("Preset saved for "+chanInfo().name+" · "+TYPES[etype].n)};
 
 /* ================= BRIEF ================= */
-const FIELDS=["cams","epNo","capLang","lang","dur","openSec","company","days","title","dateline","office","notes","fileNotes","topic"];
+const FIELDS=["cams","epNo","capLang","lang","dur","openSec","company","days","title","dateline","office","mNifty","mUsd","mCrude","mGold","mDxy","mFii","notes","fileNotes","topic"];
 function allSettings(){const o={etype,secs:secs(),rawSel,refSel,alsoSel,rawExtra,refExtra,app:BUILD};FIELDS.forEach(k=>o[k]=$(k).value);return o}
 function applyAll(o){if(!o)return;if(o.etype&&TYPES[o.etype]){etype=o.etype;drawTypes()}if(o.secs)secsBy[etype]=upgradeSecs(o.secs,etype);
   if(o.rawSel)rawSel=o.rawSel;if(o.refSel)refSel=o.refSel;(o.rawExtra||[]).forEach(t=>{if(!rawExtra.includes(t))rawExtra.push(t)});(o.refExtra||[]).forEach(t=>{if(!refExtra.includes(t))refExtra.push(t)});
@@ -644,7 +659,10 @@ function applyAll(o){if(!o)return;if(o.etype&&TYPES[o.etype]){etype=o.etype;draw
   applyType(true);if(o.alsoSel){alsoSel=o.alsoSel;applyType(true)}if(o.dur)$("dur").value=o.dur;if(o.openSec)$("openSec").value=o.openSec;drawChecks();render()}
 const sep=()=>$("chanPath").value.includes("\\")?"\\":"/";
 const P=(...a)=>[$("chanPath").value,...a].join(sep());
-function fill(t){const co=$("company").value.trim(),m={company:co||"the company",days:$("days").value,title:$("title").value||"(decide a sharp title from the speech)",
+const MKT=[["mNifty","Nifty 50"],["mUsd","USD / INR"],["mCrude","crude oil (Brent)"],["mGold","gold"],["mDxy","Dollar Index"]];
+const mktText=()=>MKT.map(([id,n])=>n+" "+($(id).value.trim()||"(look up)")).join(" · ");
+const fiiText=()=>$("mFii").value.trim()||"(look up the provisional NSE figure)";
+function fill(t){const co=$("company").value.trim(),m={mkt:mktText(),fii:fiiText(),company:co||"the company",days:$("days").value,title:$("title").value||"(decide a sharp title from the speech)",
   dateline:$("dateline").value,office:$("office").value||"our office",openSec:$("openSec").value,dur:$("dur").value,lang:$("lang").value,spec:TYPES[etype].spec,
   focus:isCB()&&co?"the "+co+" analysis":"the main content"};
   return t.replace(/\{(\w+)\}/g,(x,k)=>k in m?m[k]:x)}
@@ -675,7 +693,7 @@ ${longType()?`## 3. Episode and date
 ## 4. Topic
 - ${$("topic").value||"—"}
 - On-screen title: ${$("title").value||"(decide from the speech)"}
-${isCB()?`- Company: ${$("company").value||"—"} · price movement: last ${$("days").value} days\n`:""}
+${isCB()?`- Company: ${$("company").value||"—"} · price movement: last ${$("days").value} days\n`:""}- Market snapshot: ${mktText()} · FII yesterday: ${fiiText()}\n
 ## 5. What is in the folders
 Raw: ${sel(rawSel).join("; ")||"camera footage"}
 Reference: ${sel(refSel).join("; ")||"nothing"}
@@ -783,7 +801,7 @@ const HELP=[
 `<ul><li>Pick the channel (or <b>＋ Add new channel…</b>). <b>Remove</b> only takes it off the list.</li><li>Choose where its videos live; check the full path — Claude uses it.</li><li>First time: <b>Connect this folder</b> › pick the channel folder › <b>Edit files</b>. Later: <b>Reconnect</b> if asked.</li></ul>`,
 `<ul><li>Language, maximum minutes and opening seconds — the bar shows the time split.</li><li>Captions only for YouTube Regular / Explainer / Podcast.</li><li>Cameras: 1–3 for long videos; Shorts, Reels, Stories use one.</li></ul>`,
 `<ul><li>Date is today by default.</li><li>Short / Reel / Story band: <b>NEW | date</b>. Long videos: <b>EPISODE No.</b> — goes up by one on each save.</li><li>Type over the band to change it.</li></ul>`,
-`<ul><li>Short topic — it becomes the folder name.</li><li>Title: leave blank for Claude to suggest one.</li><li>Stock channels: company name and days of price movement.</li></ul>`,
+`<ul><li>Short topic — it becomes the folder name.</li><li>Title: leave blank for Claude to suggest one.</li><li>Stock channels: company name and days of price movement.</li><li>Market snapshot: type today's Nifty, $/₹, crude, gold, Dollar Index and yesterday's FII figure — or leave blank for Claude to look up.</li></ul>`,
 `<ul><li>Drag files onto <b>⬆ Add footage to Raw</b> — they are copied, never overwritten.</li><li>2–3 cameras: choose Camera A / B / C first, add each camera separately.</li><li>Reference: pick where they go (this video, _Common, SFX or Broll).</li><li>Tick what is there; use the note for “clip 2 is the good take”.</li></ul>`,
 `<ul><li>Untick a heading to drop the section; untick a line to drop the line; click to edit; × deletes; <b>＋ Add line</b> for your own.</li><li>{Words} are filled in from the steps above; faded lines are for stock channels only.</li><li><b>Save as preset</b> / <b>Load</b>. “House default” brings back the original wording.</li></ul>`,
 `<ul><li><b>Save brief &amp; copy prompt</b> › paste into Claude (chat with this channel folder added).</li><li>Finished video appears in Render.</li><li>Need a fix? Ask Claude — it makes a _v2.</li></ul>`];
