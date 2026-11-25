@@ -160,8 +160,6 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
     <div style="grid-column:span 2;align-self:end"><label class="chk"><input type="checkbox" id="epDate"><span>Also show the date on the episode band</span></label></div></div>
   <div class="g3"><div><label class="l">Date</label><input type="date" id="vdate"></div>
     <div style="grid-column:span 2"><label class="l">Top band text <span class="tok">{dateline}</span></label><input type="text" id="dateline" maxlength="80"></div></div>
-  <label class="l">Videos already in this channel (click to reopen)</label>
-  <div id="projList"><span class="mut">Connect the folder to see them.</span></div>
 </div>
 
 <div class="card">
@@ -261,7 +259,7 @@ footer{text-align:center;padding:4px 0 26px;color:var(--mut);font-size:12px}
 
 <script>
 "use strict";
-const BUILD="v5.6 · build 20261125-1215 IST";
+const BUILD="v5.7 · build 20261125-1230 IST";
 const $=id=>document.getElementById(id);
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("on");setTimeout(()=>e.classList.remove("on"),2600)};
 const ls={get:(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -500,7 +498,7 @@ function locChanged(){ls.set("loc_"+chan,{t:$("locType").value,n:$("locName").va
 $("locType").onchange=locChanged;$("locName").oninput=locChanged;
 async function loadChan(){drawChan();
   $("chanPath").value=ls.get("path_"+chan,"~/Desktop/"+chanInfo().folder);drawLoc();proj=null;if(typeof epRefresh==="function")epRefresh();
-  $("projList").innerHTML='<span class="mut">Connect the folder to see them.</span>';$("newProj").disabled=$("refresh").disabled=true;$("reconnect").hidden=true;if(hasFS)$("fsNote").textContent="";
+  $("newProj").disabled=$("refresh").disabled=true;$("reconnect").hidden=true;if(hasFS)$("fsNote").textContent="";
   drawTree();drawSecs();drawPresets();render();
   if(roots[chan])return useRoot(roots[chan]);if(!hasFS)return;const h=await kvGet("root_"+chan);if(!h)return;
   if(await h.queryPermission({mode:"readwrite"})==="granted")useRoot(h);else{$("reconnect").hidden=false;$("fsNote").textContent="Click Reconnect to open the "+h.name+" folder again."}}
@@ -520,8 +518,7 @@ const hasFS="showDirectoryPicker" in window;
 if(!hasFS){$("fsNote").innerHTML="This browser can't open folders — open the app in <b>Chrome</b> or <b>Edge</b>. You can still use <b>Download brief</b>.";$("pickRoot").disabled=true}
 async function useRoot(h){roots[chan]=h;await kvSet("root_"+chan,h);$("newProj").disabled=$("refresh").disabled=false;$("reconnect").hidden=true;
   $("fsNote").innerHTML='<span class="badge">Connected: '+esc(h.name)+'</span>';for(const s of SUBS)await h.getDirectoryHandle(s,{create:true});
-  try{const c=await (await h.getDirectoryHandle("Reference",{create:true})).getDirectoryHandle("_Common",{create:true});await c.getDirectoryHandle("SFX",{create:true});await c.getDirectoryHandle("Broll",{create:true})}catch(e){}
-  await listProjects()}
+  try{const c=await (await h.getDirectoryHandle("Reference",{create:true})).getDirectoryHandle("_Common",{create:true});await c.getDirectoryHandle("SFX",{create:true});await c.getDirectoryHandle("Broll",{create:true})}catch(e){}}
 $("pickRoot").onclick=async()=>{try{const h=await showDirectoryPicker({mode:"readwrite",id:"cb_"+chan});
   if(await h.requestPermission({mode:"readwrite"})!=="granted"){toast("Please click 'Edit files' / Allow so the app can create folders");return}
   if(!ls.get("pathTouched_"+chan,false)&&$("locType").value==="desk"){$("chanPath").value="~/Desktop/"+h.name;saveChanForm()}await useRoot(h);render();logAct("connected folder "+h.name);toast(chanInfo().name+" folder connected")}
@@ -529,14 +526,7 @@ $("pickRoot").onclick=async()=>{try{const h=await showDirectoryPicker({mode:"rea
 $("reconnect").onclick=async()=>{const h=await kvGet("root_"+chan);if(h&&await h.requestPermission({mode:"readwrite"})==="granted")useRoot(h)};
 async function sub(d,n,create){try{return await d.getDirectoryHandle(n,{create:!!create})}catch(e){return null}}
 async function listFiles(d){const a=[];if(!d)return a;for await(const [n,e] of d.entries()){if(n.startsWith(".")||n.startsWith("_brief"))continue;a.push(e.kind==="directory"?n+"/":n)}return a.sort()}
-async function listProjects(){const r=roots[chan];if(!r)return;const names=new Set(),cnt={};
-  for(const s of SUBS){const d=await sub(r,s);if(!d)continue;for await(const [n,e] of d.entries()){if(e.kind!=="directory"||/^[._]/.test(n))continue;names.add(n);(cnt[n]=cnt[n]||{})[s]=(await listFiles(e)).length}}
-  const list=[...names].sort((a,b)=>sk(b).localeCompare(sk(a)));const box=$("projList");box.innerHTML=list.length?"":'<span class="mut">No videos yet — fill the topic and Create folders.</span>';
-  for(const n of list.slice(0,30)){const d=document.createElement("div");d.className="proj"+(proj===n?" sel":"");
-    d.innerHTML=`<b></b><span class="tags">${SUBS.map(s=>`<span class="${cnt[n][s]?"":"zero"}">${s} ${cnt[n][s]||0}</span>`).join("")}</span>`;d.querySelector("b").textContent=n;
-    d.onclick=()=>selectProject(n);box.appendChild(d)}}
-const sk=n=>{const m=n.match(/^(\d\d)(\d\d)(\d\d)/);return m?m[3]+m[2]+m[1]+n:"0"+n};
-$("refresh").onclick=()=>{listProjects();showFiles()};
+$("refresh").onclick=()=>showFiles();
 
 /* ================= DATE / TOPIC ================= */
 const MONTHS=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
@@ -565,7 +555,7 @@ $("newProj").onclick=createFolders;
 async function selectProject(n,fresh){proj=n;const m=n.match(/^(\d\d)(\d\d)(\d\d)_(.*)$/);
   if(m&&!fresh){$("vdate").value=`20${m[3]}-${m[2]}-${m[1]}`;$("topic").value=m[4].replace(/-/g," ");if(!dlTouched)$("dateline").value=autoDateline()}
   if(!fresh){try{const d=await sub(await sub(roots[chan],"Raw"),n);const f=await(await d.getFileHandle("brief.json")).getFile();applyAll(JSON.parse(await f.text()))}catch(e){}}
-  $("namePrev").textContent=projName();drawTree();await showFiles();await listProjects();render()}
+  $("namePrev").textContent=projName();drawTree();await showFiles();render()}
 async function showFiles(){const r=roots[chan];if(!r||!proj)return;
   const show=async(s,el)=>{const f=await listFiles(await sub(await sub(r,s),proj));$(el).innerHTML=f.length?f.map(x=>"• "+esc(x)).join("<br>"):'<span class="mut">Empty — copy files into '+s+'/'+esc(proj)+'</span>'};
   await show("Raw","rawFiles");await show("Reference","refFiles")}
@@ -600,7 +590,7 @@ async function addFiles(files,where){if(copying){toast("Please wait — still co
       await ws.close()}
     $("copyMsg").textContent=`✓ ${files.length} file(s) added`;logAct(`added ${files.length} file(s) to ${where==="raw"?"Raw":"Reference"}/${proj}`);toast(`${files.length} file(s) copied — the originals are untouched`)}
   catch(e){$("copyMsg").textContent="Copy stopped: "+e.message+" (check free space on the drive)";toast("Copy stopped: "+e.message)}
-  finally{copying=false;showFiles();listProjects()}}
+  finally{copying=false;showFiles()}}
 function hookDrop(zone,pick,where){const z=$(zone),p=$(pick);z.onclick=()=>p.click();p.onchange=()=>{const fl=[...p.files];p.value="";addFiles(fl,where)};
   z.addEventListener("dragover",e=>{e.preventDefault();z.classList.add("over")});z.addEventListener("dragleave",()=>z.classList.remove("over"));
   z.addEventListener("drop",e=>{e.preventDefault();z.classList.remove("over");
@@ -735,7 +725,7 @@ $("save").onclick=async()=>{const r=roots[chan];if(!r||!hasFS){$("dl").onclick()
   try{const d=await sub(await sub(r,"Raw",true),proj,true);const old=await readFile(d,"EDIT_BRIEF.md");
     if(old!==null){const h=await sub(d,"_brief_history",true);await writeFile(h,"EDIT_BRIEF_"+stamp()+".md",old)}
     await writeFile(d,"EDIT_BRIEF.md",brief());await writeFile(d,"brief.json",JSON.stringify(allSettings(),null,1));
-    await copy(promptText());if(longType())ls.set(epKey(),Math.max(ls.get(epKey(),0),+$("epNo").value||0));await logAct("saved brief "+proj+" ("+TYPES[etype].n+")");toast("Brief saved · prompt copied — paste it into Claude");showFiles();listProjects()}
+    await copy(promptText());if(longType())ls.set(epKey(),Math.max(ls.get(epKey(),0),+$("epNo").value||0));await logAct("saved brief "+proj+" ("+TYPES[etype].n+")");toast("Brief saved · prompt copied — paste it into Claude");showFiles()}
   catch(e){toast("Could not save: "+e.message)}};
 
 /* ================= ACTIVITY LOG ================= */
@@ -792,7 +782,7 @@ const HELP=[
 `<ul><li>Pick what you are making — only its instructions appear in step 6.</li><li><b>Edit level:</b> Essential (calm, core only) · Standard (adds zoom, names, sound effects, opening) · Full (everything). Changing a tick yourself makes it Custom.</li><li><b>＋ Add new type…</b> for your own kind of video.</li></ul><b>First time on a laptop</b><ul><li>Open in Chrome › <b>⬇ Install app</b>.</li><li>Step 1 for each channel.</li><li>Put logo, office clips and sound effects in <b>Reference › _Common</b>.</li><li>⚙ › set a password › <b>Export settings</b> as a backup.</li><li>Claude desktop app: ＋ › <b>Add folder</b> › the channel folder.</li></ul>`,
 `<ul><li>Pick the channel (or <b>＋ Add new channel…</b>). <b>Remove</b> only takes it off the list.</li><li>Choose where its videos live; check the full path — Claude uses it.</li><li>First time: <b>Connect this folder</b> › pick the channel folder › <b>Edit files</b>. Later: <b>Reconnect</b> if asked.</li></ul>`,
 `<ul><li>Language, maximum minutes and opening seconds — the bar shows the time split.</li><li>Captions only for YouTube Regular / Explainer / Podcast.</li><li>Cameras: 1–3 for long videos; Shorts, Reels, Stories use one.</li></ul>`,
-`<ul><li>Date is today by default.</li><li>Short / Reel / Story band: <b>NEW | date</b>. Long videos: <b>EPISODE No.</b> — goes up by one on each save.</li><li>Type over the band to change it. Click an earlier video to reopen it.</li></ul>`,
+`<ul><li>Date is today by default.</li><li>Short / Reel / Story band: <b>NEW | date</b>. Long videos: <b>EPISODE No.</b> — goes up by one on each save.</li><li>Type over the band to change it.</li></ul>`,
 `<ul><li>Short topic — it becomes the folder name.</li><li>Title: leave blank for Claude to suggest one.</li><li>Stock channels: company name and days of price movement.</li></ul>`,
 `<ul><li>Drag files onto <b>⬆ Add footage to Raw</b> — they are copied, never overwritten.</li><li>2–3 cameras: choose Camera A / B / C first, add each camera separately.</li><li>Reference: pick where they go (this video, _Common, SFX or Broll).</li><li>Tick what is there; use the note for “clip 2 is the good take”.</li></ul>`,
 `<ul><li>Untick a heading to drop the section; untick a line to drop the line; click to edit; × deletes; <b>＋ Add line</b> for your own.</li><li>{Words} are filled in from the steps above; faded lines are for stock channels only.</li><li><b>Save as preset</b> / <b>Load</b>. “House default” brings back the original wording.</li></ul>`,
